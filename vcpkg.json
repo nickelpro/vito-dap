@@ -1,0 +1,14 @@
+{
+  "name": "vito-dap",
+  "version": "0.0.1",
+  "description": "Vito's Debug Adaptor Protocol Implementation",
+  "homepage": "https://github.com/nickelpro/vito-dap",
+  "maintainers": [
+    "Vito Gamberini <vito@gamberini.email>"
+  ],
+  "license": "Zlib",
+  "dependencies": [
+    "fmt",
+    "nlohmann-json"
+  ]
+}
