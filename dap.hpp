@@ -176,7 +176,6 @@ enum EventType {
   E_ProgressEnd,
   E_Invalidated,
   E_Memory,
-
 };
 
 struct Event : ProtocolMessage {

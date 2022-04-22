@@ -11,4 +11,6 @@ find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 add_executable(dap dap.cpp dap.hpp)
+target_compile_features(dap PRIVATE cxx_std_20)
+target_compile_options(dap PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(dap PRIVATE fmt::fmt-header-only nlohmann_json::nlohmann_json)
