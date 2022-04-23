@@ -46,6 +46,15 @@ struct ExceptionOptions {
   ExceptionBreakMode breakMode;
 };
 
+struct ExceptionDetails {
+  std::optional<std::string> message;
+  std::optional<std::string> typeName;
+  std::optional<std::string> fullTypeName;
+  std::optional<std::string> evaluateName;
+  std::optional<std::string> stackTrace;
+  std::optional<std::vector<ExceptionDetails>> innerExceptions;
+};
+
 enum struct ColumnDescriptorType {
   unknown,
   string,
@@ -182,6 +191,13 @@ struct BreakpointLocation {
   std::optional<std::int64_t> endColumn;
 };
 
+enum struct SteppingGranularity {
+  unknown,
+  statement,
+  line,
+  instruction,
+};
+
 struct Module {
   std::variant<std::uint64_t, std::string> id;
   std::string name;
@@ -193,6 +209,141 @@ struct Module {
   std::optional<std::string> symbolFilePath;
   std::optional<std::string> dateTimeStamp;
   std::optional<std::string> addressRange;
+};
+
+struct StackFrameFormat {
+  std::optional<bool> parameters;
+  std::optional<bool> parameterTypes;
+  std::optional<bool> parameterNames;
+  std::optional<bool> parameterValues;
+  std::optional<bool> line;
+  std::optional<bool> module;
+  std::optional<bool> includeAll;
+};
+
+enum struct StackFramePresentationHint {
+  unknown,
+  normal,
+  label,
+  subtle,
+};
+
+struct StackFrame {
+  std::int64_t id;
+  std::string name;
+  Source source;
+  std::int64_t line;
+  std::int64_t column;
+  std::optional<std::int64_t> endLine;
+  std::optional<std::int64_t> endColumn;
+  std::optional<bool> canRestart;
+  std::optional<std::string> instructionPointerReference;
+  std::optional<std::variant<std::int64_t, std::string>> moduleId;
+  std::optional<StackFramePresentationHint> presentationHint;
+};
+
+struct Scope {
+  std::string name;
+  std::string presentationHint;
+  std::int64_t variablesReference;
+  std::optional<std::int64_t> namedVariables;
+  std::optional<std::int64_t> indexedVariables;
+  bool expensive;
+  std::optional<Source> source;
+  std::optional<std::int64_t> line;
+  std::optional<std::int64_t> column;
+  std::optional<std::int64_t> endLine;
+  std::optional<std::int64_t> endColumn;
+};
+
+struct ValueFormat {
+  std::optional<bool> hex;
+};
+
+struct VariablePresentationHint {
+  std::string kind;
+  std::optional<std::vector<std::string>> attributes;
+  std::optional<std::string> visibility;
+  std::optional<bool> lazy;
+};
+
+struct Variable {
+  std::string name;
+  std::string value;
+  std::optional<std::string> type;
+  std::optional<VariablePresentationHint> presentationHint;
+  std::optional<std::string> evaluateName;
+  std::int64_t variablesReference;
+  std::optional<std::int64_t> namedVariables;
+  std::optional<std::int64_t> indexedVariables;
+  std::optional<std::string> memoryReference;
+};
+
+struct Thread {
+  int64_t id;
+  std::string name;
+};
+
+struct StepInTarget {
+  int64_t id;
+  std::string label;
+};
+
+struct GotoTarget {
+  int64_t id;
+  std::string label;
+  std::int64_t line;
+  std::optional<std::int64_t> column;
+  std::optional<std::int64_t> endLine;
+  std::optional<std::int64_t> endColumn;
+  std::optional<std::string> instructionPointerReference;
+};
+
+enum struct CompletionItemType {
+  unknown,
+  method,
+  function,
+  constructor,
+  field,
+  variable,
+  class_,
+  interface,
+  module,
+  property,
+  unit,
+  value,
+  enum_,
+  keyword,
+  snippet,
+  text,
+  color,
+  file,
+  reference,
+  customColor,
+};
+
+struct CompletionItem {
+  std::string label;
+  std::optional<std::string> text;
+  std::optional<std::string> sortText;
+  std::optional<std::string> detail;
+  std::optional<CompletionItemType> type;
+  std::optional<std::int64_t> start;
+  std::optional<std::int64_t> length;
+  std::optional<std::int64_t> selectionStart;
+  std::optional<std::int64_t> selectionLength;
+};
+
+struct DisassembledInstruction {
+  std::string address;
+  std::optional<std::string> instructionBytes;
+  std::string instruction;
+  std::optional<std::string> symbol;
+  std::optional<Source> location;
+  std::optional<std::int64_t> line;
+  std::optional<std::int64_t> column;
+  std::optional<std::int64_t> endLine;
+  std::optional<std::int64_t> endColumn;
 };
 
 enum struct MessageType {
@@ -210,6 +361,48 @@ struct ProtocolMessage {
 enum struct CommandType {
   unknown,
   cancel,
+  runInTerminal,
+  initialize,
+  configurationDone,
+  launch,
+  attach,
+  restart,
+  disconnect,
+  terminate,
+  breakpointLocations,
+  setBreakpoints,
+  setFunctionBreakpoints,
+  setExceptionBreakpoints,
+  dataBreakpointInfo,
+  setDataBreakpoints,
+  setInstructionBreakpoints,
+  continue_,
+  next,
+  stepIn,
+  stepOut,
+  stepBack,
+  reverseContinue,
+  restartFrame,
+  goto_,
+  pause,
+  stackTrace,
+  scopes,
+  variables,
+  setVariable,
+  source,
+  threads,
+  terminateThreads,
+  modules,
+  loadedSources,
+  evaluate,
+  setExpression,
+  stepInTargets,
+  gotoTargets,
+  completions,
+  exceptionInfo,
+  readMemory,
+  writeMemory,
+  disassemble,
 };
 
 struct Request : ProtocolMessage {
@@ -514,6 +707,268 @@ struct SetInstructionBreakpointsRequest : Request {
 
 struct SetInstructionBreakpointsResponse : Response {
   std::vector<Breakpoint> breakpoints;
+};
+
+struct ContinueRequest : Request {
+  std::int64_t threadId;
+  std::optional<bool> singleThread;
+};
+
+struct ContinueResponse : Response {
+  std::optional<bool> allThreadsContinued;
+};
+
+struct NextRequest : Request {
+  std::int64_t threadId;
+  std::optional<bool> singleThread;
+  std::optional<SteppingGranularity> granularity;
+};
+
+struct NextResponse : Response {};
+
+struct StepInRequest : Request {
+  int64_t threadId;
+  std::optional<bool> singleThread;
+  std::optional<std::int64_t> targetId;
+  std::optional<SteppingGranularity> granularity;
+};
+
+struct StepInResponse : Response {};
+
+struct StepOutRequest : Request {
+  std::int64_t threadId;
+  std::optional<bool> singleThread;
+  std::optional<SteppingGranularity> granularity;
+};
+
+struct StepOutResponse : Response {};
+
+struct StepBackRequest : Request {
+  std::int64_t threadId;
+  std::optional<bool> singleThread;
+  std::optional<bool> granularity;
+};
+
+struct StepBackResponse : Response {};
+
+struct ReverseContinueRequest : Request {
+  std::int64_t threadId;
+  std::optional<bool> singleThread;
+};
+
+struct ReverseContinueResponse : Response {};
+
+struct RestartFrameRequest : Request {
+  std::int64_t frameId;
+};
+
+struct RestartFrameResponse : Response {};
+
+struct GotoRequest : Request {
+  std::int64_t threadId;
+  std::int64_t targetId;
+};
+
+struct GotoResponse : Response {};
+
+struct PauseRequest : Request {
+  std::int64_t threadId;
+};
+
+struct PauseResponse : Response {};
+
+struct StackTraceRequest : Request {
+  std::int64_t threadId;
+  std::optional<std::int64_t> startFrame;
+  std::optional<std::int64_t> levels;
+  std::optional<StackFrameFormat> format;
+};
+
+struct StackTraceResponse : Response {
+  std::vector<StackFrame> stackFrames;
+  std::optional<std::int64_t> totalFrames;
+};
+
+struct ScopesRequest : Request {
+  std::int64_t frameId;
+};
+
+struct ScopesResponse : Response {
+  std::vector<Scope> scopes;
+};
+
+enum struct VariablesFilter {
+  unknown,
+  indexed,
+  named,
+};
+
+struct VariablesRequest : Request {
+  std::int64_t variablesReference;
+  std::optional<VariablesFilter> filter;
+  std::optional<std::int64_t> start;
+  std::optional<std::int64_t> count;
+  std::optional<ValueFormat> format;
+};
+
+struct VariablesResponse : Response {
+  std::vector<Variable> variables;
+};
+
+struct SetVariableRequest : Request {
+  std::int64_t variablesReference;
+  std::string name;
+  std::string value;
+  std::optional<ValueFormat> format;
+};
+
+struct SetVariableResponse : Response {
+  std::string value;
+  std::optional<std::string> type;
+  std::optional<std::int64_t> variablesReference;
+  std::optional<std::int64_t> namedVariables;
+  std::optional<std::int64_t> indexedVariables;
+};
+
+struct SourceRequest : Request {
+  std::optional<Source> source;
+  std::int64_t sourceReference;
+};
+
+struct SourceResponse : Response {
+  std::string content;
+  std::optional<std::string> mimeType;
+};
+
+struct ThreadsRequest : Request {};
+
+struct ThreadsResponse : Response {
+  std::vector<Thread> threads;
+};
+
+struct ModulesRequest : Request {
+  std::optional<std::int64_t> startModule;
+  std::optional<std::int64_t> moduleCount;
+};
+
+struct ModulesResponse : Response {
+  std::vector<Module> modules;
+  std::optional<std::int64_t> totalModules;
+};
+
+struct LoadedSourcesRequest : Request {};
+
+struct LoadedSourcesResponse : Response {
+  std::vector<Source> sources;
+};
+
+struct EvaluateRequest : Request {
+  std::string expression;
+  std::optional<std::int64_t> frameId;
+  std::optional<std::string> context;
+  std::optional<ValueFormat> format;
+};
+
+struct EvaluateResponse : Response {
+  std::string result;
+  std::optional<std::string> type;
+  std::optional<VariablePresentationHint> presentationHint;
+  std::int64_t variablesReference;
+  std::optional<std::int64_t> namedVariables;
+  std::optional<std::int64_t> indexedVariables;
+  std::optional<std::string> memoryReference;
+};
+
+struct SetExpressionRequest : Request {
+  std::string expression;
+  std::string value;
+  std::optional<std::int64_t> frameId;
+  std::optional<ValueFormat> format;
+};
+
+struct SetExpressionResponse : Response {
+  std::string value;
+  std::optional<std::string> type;
+  std::optional<VariablePresentationHint> presentationHint;
+  std::optional<std::int64_t> variablesReference;
+  std::optional<std::int64_t> namedVariables;
+  std::optional<std::int64_t> indexedVariables;
+};
+
+struct StepInTargetsRequest : Request {
+  std::int64_t frameId;
+};
+
+struct StepInTargetsResponse : Response {
+  std::vector<StepInTarget> targets;
+};
+
+struct GotoTargetsRequest : Request {
+  Source source;
+  std::int64_t line;
+  std::optional<std::int64_t> column;
+};
+
+struct GotoTargetsResponse : Response {
+  std::vector<GotoTarget> targets;
+};
+
+struct CompletionsRequest : Request {
+  std::optional<std::int64_t> frameId;
+  std::string text;
+  std::int64_t column;
+  std::optional<std::int64_t> line;
+};
+
+struct CompletionsResponse : Response {
+  std::vector<CompletionItem> targets;
+};
+
+struct ExceptionInfoRequest : Request {
+  std::int64_t threadId;
+};
+
+struct ExceptionInfoResponse : Response {
+  std::string exceptionId;
+  std::optional<std::string> description;
+  ExceptionBreakMode breakMode;
+  std::optional<ExceptionDetails> details;
+};
+
+struct ReadMemoryRequest : Request {
+  std::string memoryReference;
+  std::optional<std::int64_t> offset;
+  std::int64_t count;
+};
+
+struct ReadMemoryResponse : Response {
+  std::string address;
+  std::optional<std::int64_t> unreadableBytes;
+  std::optional<std::string> data;
+};
+
+struct WriteMemoryRequest : Request {
+  std::string memoryReference;
+  std::optional<std::int64_t> offset;
+  std::optional<bool> allowPartial;
+  std::string data;
+};
+
+struct WriteMemoryResponse : Response {
+  std::optional<std::int64_t> offset;
+  std::optional<std::int64_t> bytesWritten;
+};
+
+struct DisassembleRequest : Request {
+  std::string memoryReference;
+  std::optional<std::int64_t> offset;
+  std::optional<std::int64_t> instructionOffset;
+  std::int64_t instructionCount;
+  std::optional<bool> resolveSymbols;
+};
+
+struct DisassembleResponse : Response {
+  std::vector<DisassembledInstruction> instructions;
 };
 
 } // namespace dap
