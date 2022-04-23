@@ -4,7 +4,9 @@
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -12,7 +14,22 @@
 
 namespace dap {
 
-namespace js = nlohmann;
+using json = nlohmann::json;
+
+// Switch to string_view if:
+//   https://github.com/nlohmann/json/pull/2685
+// ever merges
+template <typename T>
+void to_optJson(json& j, const std::string& s, const std::optional<T>& p) {
+  if(p)
+    j[s] = *p;
+}
+
+template <typename T>
+void from_optJson(const json& j, const std::string& s, std::optional<T>& p) {
+  if(auto it {j.find(s)}; it != j.end())
+    p = it->get<T>();
+}
 
 struct ExceptionBreakpointsFilter {
   std::string filter;
@@ -23,28 +40,108 @@ struct ExceptionBreakpointsFilter {
   std::optional<std::string> conditionDescription;
 };
 
+void to_json(json& j, const ExceptionBreakpointsFilter& p) {
+  j = json {{"filter", p.filter}, {"label", p.label}};
+  to_optJson(j, "description", p.description);
+  to_optJson(j, "default", p.default_);
+  to_optJson(j, "supportsCondition", p.supportsCondition);
+  to_optJson(j, "conditionDescription", p.conditionDescription);
+}
+
+void from_json(const json& j, ExceptionBreakpointsFilter& p) {
+  j.at("filter").get_to(p.filter);
+  j.at("label").get_to(p.label);
+  from_optJson(j, "description", p.description);
+  from_optJson(j, "default", p.default_);
+  from_optJson(j, "supportsCondition", p.supportsCondition);
+  from_optJson(j, "conditionDescription", p.conditionDescription);
+}
+
 struct ExceptionFilterOptions {
   std::string filterId;
   std::optional<std::string> condition;
 };
+
+void to_json(json& j, const ExceptionFilterOptions& p) {
+  j = json {{"filterId", p.filterId}};
+  to_optJson(j, "condition", p.condition);
+}
+
+void from_json(const json& j, ExceptionFilterOptions& p) {
+  j.at("filterId").get_to(p.filterId);
+  from_optJson(j, "condition", p.condition);
+}
 
 struct ExceptionPathSegment {
   std::optional<bool> negate;
   std::vector<std::string> name;
 };
 
+void to_json(json& j, const ExceptionPathSegment& p) {
+  j = json {{"name", p.name}};
+  to_optJson(j, "negate", p.negate);
+}
+
+void from_json(const json& j, ExceptionPathSegment& p) {
+  j.at("name").get_to(p.name);
+  from_optJson(j, "negate", p.negate);
+}
+
 enum struct ExceptionBreakMode {
-  unknown,
   never,
   always,
   unhandled,
   userUnhandled,
 };
 
+void to_json(json& j, const ExceptionBreakMode& p) {
+  switch(p) {
+    case ExceptionBreakMode::never:
+      j = json("never");
+      break;
+    case ExceptionBreakMode::always:
+      j = json("always");
+      break;
+    case ExceptionBreakMode::unhandled:
+      j = json("unhandled");
+      break;
+    case ExceptionBreakMode::userUnhandled:
+      j = json("userUnhandled");
+      break;
+    default:
+      throw std::runtime_error {"Unknown ExceptionBreakMode"};
+  };
+}
+
+void from_json(const json& j, ExceptionBreakMode& p) {
+  std::string breakMode {j.get<std::string>()};
+  if(breakMode == "never")
+    p = ExceptionBreakMode::never;
+  else if(breakMode == "always")
+    p = ExceptionBreakMode::always;
+  else if(breakMode == "unhandled")
+    p = ExceptionBreakMode::unhandled;
+  else if(breakMode == "userUnhandled")
+    p = ExceptionBreakMode::userUnhandled;
+  else
+    throw std::runtime_error {"Unknown ExceptionBreakMode"};
+}
+
+
 struct ExceptionOptions {
   std::optional<std::vector<ExceptionPathSegment>> path;
   ExceptionBreakMode breakMode;
 };
+
+void to_json(json& j, const ExceptionOptions& p) {
+  j = json {{"breakMode", p.breakMode}};
+  to_optJson(j, "path", p.path);
+}
+
+void from_json(const json& j, ExceptionOptions& p) {
+  j.at("breakMode").get_to(p.breakMode);
+  from_optJson(j, "path", p.path);
+}
 
 struct ExceptionDetails {
   std::optional<std::string> message;
@@ -54,6 +151,24 @@ struct ExceptionDetails {
   std::optional<std::string> stackTrace;
   std::optional<std::vector<ExceptionDetails>> innerExceptions;
 };
+
+void to_json(json& j, const ExceptionDetails& p) {
+  to_optJson(j, "message", p.message);
+  to_optJson(j, "typeName", p.typeName);
+  to_optJson(j, "fullTypeName", p.fullTypeName);
+  to_optJson(j, "evaluateName", p.evaluateName);
+  to_optJson(j, "stackTrace", p.stackTrace);
+  to_optJson(j, "innerExceptions", p.innerExceptions);
+}
+
+void from_json(const json& j, ExceptionDetails& p) {
+  from_optJson(j, "message", p.message);
+  from_optJson(j, "typeName", p.typeName);
+  from_optJson(j, "fullTypeName", p.fullTypeName);
+  from_optJson(j, "evaluateName", p.evaluateName);
+  from_optJson(j, "stackTrace", p.stackTrace);
+  from_optJson(j, "innerExceptions", p.innerExceptions);
+}
 
 enum struct ColumnDescriptorType {
   unknown,
@@ -140,7 +255,7 @@ struct Source {
   std::optional<SourcePresentationHint> presentationHint;
   std::optional<std::string> origin;
   std::optional<std::vector<Source>> sources;
-  std::optional<js::json> adapterData;
+  std::optional<json> adapterData;
   std::optional<std::vector<Checksum>> checksums;
 };
 
@@ -475,7 +590,7 @@ struct ContinuedEvent : Event {
 struct ExitedEvent : Event {};
 
 struct TerminatedEvent : Event {
-  std::optional<js::json> restart;
+  std::optional<json> restart;
 };
 
 struct ThreadEvent : Event {
@@ -498,7 +613,7 @@ struct OutputEvent : Event {
   std::optional<Source> source;
   std::optional<std::int64_t> line;
   std::optional<std::int64_t> column;
-  std::optional<js::json> data;
+  std::optional<json> data;
 };
 
 struct BreakpointEvent : Event {
@@ -619,20 +734,20 @@ struct ConfigurationDoneResponse : Response {};
 
 struct LaunchRequest : Request {
   std::optional<bool> noDebug;
-  std::optional<js::json> __restart;
+  std::optional<json> __restart;
 };
 
 struct LaunchResponse : Response {};
 
 struct AttachRequest : Request {
-  std::optional<js::json> __restart;
+  std::optional<json> __restart;
 };
 
 struct AttachResponse : Response {};
 
 struct RestartRequest : Request {
   std::optional<bool> noDebug;
-  std::optional<js::json> __restart;
+  std::optional<json> __restart;
 };
 
 struct RestartResponse : Response {};
