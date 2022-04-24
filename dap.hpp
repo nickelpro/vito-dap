@@ -1228,19 +1228,56 @@ void from_json(const json& j, DisassembledInstruction& p) {
 }
 
 enum struct MessageType {
-  unknown,
   request,
   response,
   event,
 };
+
+void to_json(json& j, const MessageType& p) {
+  switch(p) {
+    case MessageType::request:
+      j = "request";
+      break;
+    case MessageType::response:
+      j = "response";
+      break;
+    case MessageType::event:
+      j = "event";
+      break;
+    default:
+      throw std::runtime_error {"Unknown MessageType"};
+  };
+}
+
+void from_json(const json& j, MessageType& p) {
+  std::string s {j.get<std::string>()};
+  if(s == "request")
+    p = MessageType::request;
+  else if(s == "response")
+    p = MessageType::response;
+  else if(s == "event")
+    p = MessageType::event;
+  else
+    throw std::runtime_error {"Unknown MessageType"};
+}
+
 
 struct ProtocolMessage {
   std::int64_t seq;
   MessageType type;
 };
 
+void to_json(json& j, const ProtocolMessage& p) {
+  j["seq"] = p.seq;
+  j["type"] = p.type;
+}
+
+void from_json(const json& j, ProtocolMessage& p) {
+  j.at("seq").get_to(p.seq);
+  j.at("type").get_to(p.type);
+}
+
 enum struct CommandType {
-  unknown,
   cancel,
   runInTerminal,
   initialize,
@@ -1286,12 +1323,229 @@ enum struct CommandType {
   disassemble,
 };
 
+void to_json(json& j, const CommandType& p) {
+  switch(p) {
+    case CommandType::cancel:
+      j = "cancel";
+      break;
+    case CommandType::runInTerminal:
+      j = "runInTerminal";
+      break;
+    case CommandType::initialize:
+      j = "initialize";
+      break;
+    case CommandType::configurationDone:
+      j = "configurationDone";
+      break;
+    case CommandType::launch:
+      j = "launch";
+      break;
+    case CommandType::attach:
+      j = "attach";
+      break;
+    case CommandType::restart:
+      j = "restart";
+      break;
+    case CommandType::disconnect:
+      j = "disconnect";
+      break;
+    case CommandType::terminate:
+      j = "terminate";
+      break;
+    case CommandType::breakpointLocations:
+      j = "breakpointLocations";
+      break;
+    case CommandType::setBreakpoints:
+      j = "setBreakpoints";
+      break;
+    case CommandType::setFunctionBreakpoints:
+      j = "setFunctionBreakpoints";
+      break;
+    case CommandType::continue_:
+      j = "continue";
+      break;
+    case CommandType::next:
+      j = "next";
+      break;
+    case CommandType::stepIn:
+      j = "stepIn";
+      break;
+    case CommandType::stepOut:
+      j = "stepOut";
+      break;
+    case CommandType::stepBack:
+      j = "stepBack";
+      break;
+    case CommandType::reverseContinue:
+      j = "reverseContinue";
+      break;
+    case CommandType::restartFrame:
+      j = "restartFrame";
+      break;
+    case CommandType::goto_:
+      j = "goto";
+      break;
+    case CommandType::pause:
+      j = "pause";
+      break;
+    case CommandType::stackTrace:
+      j = "stackTrace";
+      break;
+    case CommandType::scopes:
+      j = "scopes";
+      break;
+    case CommandType::variables:
+      j = "variables";
+      break;
+    case CommandType::setVariable:
+      j = "setVariable";
+      break;
+    case CommandType::source:
+      j = "source";
+      break;
+    case CommandType::threads:
+      j = "threads";
+      break;
+    case CommandType::terminateThreads:
+      j = "terminateThreads";
+      break;
+    case CommandType::modules:
+      j = "modules";
+      break;
+    case CommandType::loadedSources:
+      j = "loadedSources";
+      break;
+    case CommandType::evaluate:
+      j = "evaluate";
+      break;
+    case CommandType::setExpression:
+      j = "setExpression";
+      break;
+    case CommandType::stepInTargets:
+      j = "stepInTargets";
+      break;
+    case CommandType::gotoTargets:
+      j = "gotoTargets";
+      break;
+    case CommandType::completions:
+      j = "completions";
+      break;
+    case CommandType::exceptionInfo:
+      j = "exceptionInfo";
+      break;
+    case CommandType::readMemory:
+      j = "readMemory";
+      break;
+    case CommandType::writeMemory:
+      j = "writeMemory";
+      break;
+    case CommandType::disassemble:
+      j = "disassemble";
+      break;
+    default:
+      throw std::runtime_error {"Unknown CommandType"};
+  };
+}
+
+void from_json(const json& j, CommandType& p) {
+  std::string s {j.get<std::string>()};
+  if(j == "cancel")
+    p = CommandType::cancel;
+  else if(j == "runInTerminal")
+    p = CommandType::runInTerminal;
+  else if(j == "initialize")
+    p = CommandType::initialize;
+  else if(j == "configurationDone")
+    p = CommandType::configurationDone;
+  else if(j == "launch")
+    p = CommandType::launch;
+  else if(j == "attach")
+    p = CommandType::attach;
+  else if(j == "restart")
+    p = CommandType::restart;
+  else if(j == "disconnect")
+    p = CommandType::disconnect;
+  else if(j == "terminate")
+    p = CommandType::terminate;
+  else if(j == "breakpointLocations")
+    p = CommandType::breakpointLocations;
+  else if(j == "setBreakpoints")
+    p = CommandType::setBreakpoints;
+  else if(j == "setFunctionBreakpoints")
+    p = CommandType::setFunctionBreakpoints;
+  else if(j == "continue")
+    p = CommandType::continue_;
+  else if(j == "next")
+    p = CommandType::next;
+  else if(j == "stepIn")
+    p = CommandType::stepIn;
+  else if(j == "stepOut")
+    p = CommandType::stepOut;
+  else if(j == "stepBack")
+    p = CommandType::stepBack;
+  else if(j == "reverseContinue")
+    p = CommandType::reverseContinue;
+  else if(j == "restartFrame")
+    p = CommandType::restartFrame;
+  else if(j == "goto")
+    p = CommandType::goto_;
+  else if(j == "pause")
+    p = CommandType::pause;
+  else if(j == "stackTrace")
+    p = CommandType::stackTrace;
+  else if(j == "scopes")
+    p = CommandType::scopes;
+  else if(j == "variables")
+    p = CommandType::variables;
+  else if(j == "setVariable")
+    p = CommandType::setVariable;
+  else if(j == "source")
+    p = CommandType::source;
+  else if(j == "threads")
+    p = CommandType::threads;
+  else if(j == "terminateThreads")
+    p = CommandType::terminateThreads;
+  else if(j == "modules")
+    p = CommandType::modules;
+  else if(j == "loadedSources")
+    p = CommandType::loadedSources;
+  else if(j == "evaluate")
+    p = CommandType::evaluate;
+  else if(j == "setExpression")
+    p = CommandType::setExpression;
+  else if(j == "stepInTargets")
+    p = CommandType::stepInTargets;
+  else if(j == "gotoTargets")
+    p = CommandType::gotoTargets;
+  else if(j == "completions")
+    p = CommandType::completions;
+  else if(j == "exceptionInfo")
+    p = CommandType::exceptionInfo;
+  else if(j == "readMemory")
+    p = CommandType::readMemory;
+  else if(j == "writeMemory")
+    p = CommandType::writeMemory;
+  else if(j == "disassemble")
+    p = CommandType::disassemble;
+  else
+    throw std::runtime_error {"Unknown CommandType"};
+}
+
 struct Request : ProtocolMessage {
   CommandType command;
 };
 
+void to_json(json& j, const Request& p) {
+  j = static_cast<ProtocolMessage>(p);
+  j["command"] = p.command;
+}
+
+void from_json(const json& j, Request& p) {
+  j.get_to(static_cast<ProtocolMessage&>(p));
+  j.at("command").get_to(p.command);
+}
+
 enum struct EventType {
-  unknown,
   initialized,
   stopped,
   continued,
@@ -1310,9 +1564,112 @@ enum struct EventType {
   memory,
 };
 
+void to_json(json& j, const EventType& p) {
+  switch(p) {
+    case EventType::initialized:
+      j = "initialized";
+      break;
+    case EventType::stopped:
+      j = "stopped";
+      break;
+    case EventType::continued:
+      j = "continued";
+      break;
+    case EventType::exited:
+      j = "exited";
+      break;
+    case EventType::thread:
+      j = "thread";
+      break;
+    case EventType::output:
+      j = "output";
+      break;
+    case EventType::breakpoint:
+      j = "breakpoint";
+      break;
+    case EventType::module:
+      j = "module";
+      break;
+    case EventType::loadedSource:
+      j = "loadedSource";
+      break;
+    case EventType::process:
+      j = "process";
+      break;
+    case EventType::capabilities:
+      j = "capabilities";
+      break;
+    case EventType::progressStart:
+      j = "progressStart";
+      break;
+    case EventType::progressUpdate:
+      j = "progressUpdate";
+      break;
+    case EventType::progresSend:
+      j = "progresSend";
+      break;
+    case EventType::invalidated:
+      j = "invalidated";
+      break;
+    case EventType::memory:
+      j = "memory";
+      break;
+    default:
+      throw std::runtime_error {"Unknown EventType"};
+  };
+}
+
+void from_json(const json& j, EventType& p) {
+  std::string s {j.get<std::string>()};
+  if(j == "initialized")
+    p = EventType::initialized;
+  else if(j == "stopped")
+    p = EventType::stopped;
+  else if(j == "continued")
+    p = EventType::continued;
+  else if(j == "exited")
+    p = EventType::exited;
+  else if(j == "thread")
+    p = EventType::thread;
+  else if(j == "output")
+    p = EventType::output;
+  else if(j == "breakpoint")
+    p = EventType::breakpoint;
+  else if(j == "module")
+    p = EventType::module;
+  else if(j == "loadedSource")
+    p = EventType::loadedSource;
+  else if(j == "process")
+    p = EventType::process;
+  else if(j == "capabilities")
+    p = EventType::capabilities;
+  else if(j == "progressStart")
+    p = EventType::progressStart;
+  else if(j == "progressUpdate")
+    p = EventType::progressUpdate;
+  else if(j == "progresSend")
+    p = EventType::progresSend;
+  else if(j == "invalidated")
+    p = EventType::invalidated;
+  else if(j == "memory")
+    p = EventType::memory;
+  else
+    throw std::runtime_error {"Unknown EventType"};
+}
+
 struct Event : ProtocolMessage {
   EventType event;
 };
+
+void to_json(json& j, const Event& p) {
+  j = static_cast<ProtocolMessage>(p);
+  j["event"] = p.event;
+}
+
+void from_json(const json& j, Event& p) {
+  j.get_to(static_cast<ProtocolMessage&>(p));
+  j.at("event").get_to(p.event);
+}
 
 struct Response : ProtocolMessage {
   std::int64_t request_seq;
@@ -1321,22 +1678,60 @@ struct Response : ProtocolMessage {
   std::optional<std::string> message;
 };
 
+void to_json(json& j, const Response& p) {
+  j = static_cast<ProtocolMessage>(p);
+  j["request_seq"] = p.request_seq;
+  j["success"] = p.success;
+  j["command"] = p.command;
+  to_optJson(j, "message", p.message);
+}
+
+void from_json(const json& j, Response& p) {
+  j.get_to(static_cast<ProtocolMessage&>(p));
+  j.at("request_seq").get_to(p.request_seq);
+  j.at("success").get_to(p.success);
+  j.at("command").get_to(p.command);
+  from_optJson(j, "message", p.message);
+}
+
 struct ErrorResponse : Response {
   std::optional<std::string> error;
 };
 
-struct CancelArguments {
+void to_json(json& j, const ErrorResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  to_optJson(body, "error", p.error);
+}
+
+void from_json(const json& j, ErrorResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  from_optJson(body, "error", p.error);
+}
+
+struct CancelRequest : Request {
   std::optional<std::int64_t> requestId;
   std::optional<std::string> progressId;
 };
 
-struct CancelRequest : Request {
-  std::optional<CancelArguments> arguments;
-};
+void to_json(json& j, const CancelRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "requestId", p.requestId);
+  to_optJson(arguments, "progressId", p.progressId);
+}
 
-struct CancelResponse : Response {};
+void from_json(const json& j, CancelRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "requestId", p.requestId);
+  from_optJson(arguments, "progressId", p.progressId);
+}
 
-struct InitializedEvent : Event {};
+using CancelResponse = Response;
+
+using InitializedEvent = Event;
 
 struct StoppedEvent : Event {
   std::string reason;
@@ -1348,28 +1743,134 @@ struct StoppedEvent : Event {
   std::optional<std::vector<std::int64_t>> hitBreakpointIds;
 };
 
+void to_json(json& j, const StoppedEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["reason"] = p.reason;
+  to_optJson(body, "description", p.description);
+  to_optJson(body, "threadId", p.threadId);
+  to_optJson(body, "preserveFocusHint", p.preserveFocusHint);
+  to_optJson(body, "text", p.text);
+  to_optJson(body, "allThreadsStopped", p.allThreadsStopped);
+  to_optJson(body, "hitBreakpointIds", p.hitBreakpointIds);
+}
+
+void from_json(const json& j, StoppedEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("reason").get_to(p.reason);
+  from_optJson(body, "description", p.description);
+  from_optJson(body, "threadId", p.threadId);
+  from_optJson(body, "preserveFocusHint", p.preserveFocusHint);
+  from_optJson(body, "text", p.text);
+  from_optJson(body, "allThreadsStopped", p.allThreadsStopped);
+  from_optJson(body, "hitBreakpointIds", p.hitBreakpointIds);
+}
+
 struct ContinuedEvent : Event {
   std::int64_t threadId;
   std::optional<bool> allThreadsContinued;
 };
 
-struct ExitedEvent : Event {};
+void to_json(json& j, const ContinuedEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["threadId"] = p.threadId;
+  to_optJson(body, "allThreadsContinued", p.allThreadsContinued);
+}
+
+void from_json(const json& j, ContinuedEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("threadId").get_to(p.threadId);
+  from_optJson(body, "allThreadsContinued", p.allThreadsContinued);
+}
+
+struct ExitedEvent : Event {
+  std::int64_t exitCode;
+};
+
+void to_json(json& j, const ExitedEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["exitCode"] = p.exitCode;
+}
+
+void from_json(const json& j, ExitedEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("exitCode").get_to(p.exitCode);
+}
 
 struct TerminatedEvent : Event {
   std::optional<json> restart;
 };
+
+void to_json(json& j, const TerminatedEvent& p) {
+  j = static_cast<Event>(p);
+  if(p.restart)
+    j["body"]["restart"] = *p.restart;
+}
+
+void from_json(const json& j, TerminatedEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  if(auto it {j.find("body")}; it != j.end())
+    from_optJson(*it, "restart", p.restart);
+}
 
 struct ThreadEvent : Event {
   std::string reason;
   std::int64_t threadId;
 };
 
+void to_json(json& j, const ThreadEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["reason"] = p.reason;
+  body["threadId"] = p.threadId;
+}
+
+void from_json(const json& j, ThreadEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("reason").get_to(p.reason);
+  body.at("threadId").get_to(p.threadId);
+}
+
 enum struct OutputGroup {
-  unknown,
   start,
   startCollapsed,
   end,
 };
+
+void to_json(json& j, const OutputGroup& p) {
+  switch(p) {
+    case OutputGroup::start:
+      j = "start";
+      break;
+    case OutputGroup::startCollapsed:
+      j = "startCollapsed";
+      break;
+    case OutputGroup::end:
+      j = "end";
+      break;
+    default:
+      throw std::runtime_error {"Unknown OutputGroup"};
+  };
+}
+
+void from_json(const json& j, OutputGroup& p) {
+  std::string s {j.get<std::string>()};
+  if(s == "start")
+    p = OutputGroup::start;
+  else if(s == "startCollapsed")
+    p = OutputGroup::startCollapsed;
+  else if(s == "end")
+    p = OutputGroup::end;
+  else
+    throw std::runtime_error {"Unknown OutputGroup"};
+}
+
 
 struct OutputEvent : Event {
   std::optional<std::string> category;
@@ -1382,34 +1883,158 @@ struct OutputEvent : Event {
   std::optional<json> data;
 };
 
+void to_json(json& j, const OutputEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  to_optJson(body, "category", p.category);
+  body["output"] = p.output;
+  to_optJson(body, "group", p.group);
+  to_optJson(body, "variablesReference", p.variablesReference);
+  to_optJson(body, "source", p.source);
+  to_optJson(body, "line", p.line);
+  to_optJson(body, "column", p.column);
+  to_optJson(body, "data", p.data);
+}
+
+void from_json(const json& j, OutputEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  from_optJson(body, "category", p.category);
+  body.at("output").get_to(p.output);
+  from_optJson(body, "group", p.group);
+  from_optJson(body, "variablesReference", p.variablesReference);
+  from_optJson(body, "source", p.source);
+  from_optJson(body, "line", p.line);
+  from_optJson(body, "column", p.column);
+  from_optJson(body, "data", p.data);
+}
+
 struct BreakpointEvent : Event {
   std::string reason;
   Breakpoint breakpoint;
 };
 
+void to_json(json& j, const BreakpointEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["reason"] = p.reason;
+  body["breakpoint"] = p.breakpoint;
+}
+
+void from_json(const json& j, BreakpointEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("reason").get_to(p.reason);
+  body.at("breakpoint").get_to(p.breakpoint);
+}
+
 enum struct ModuleReason {
-  unknown,
   new_,
   changed,
   removed,
 };
+
+void to_json(json& j, const ModuleReason& p) {
+  switch(p) {
+    case ModuleReason::new_:
+      j = "new";
+      break;
+    case ModuleReason::changed:
+      j = "changed";
+      break;
+    case ModuleReason::removed:
+      j = "removed";
+      break;
+    default:
+      throw std::runtime_error {"Unknown ModuleReason"};
+  };
+}
+
+void from_json(const json& j, ModuleReason& p) {
+  std::string s {j.get<std::string>()};
+  if(s == "new")
+    p = ModuleReason::new_;
+  else if(s == "changed")
+    p = ModuleReason::changed;
+  else if(s == "removed")
+    p = ModuleReason::removed;
+  else
+    throw std::runtime_error {"Unknown ModuleReason"};
+}
 
 struct ModuleEvent : Event {
   ModuleReason reason;
   Module module;
 };
 
+void to_json(json& j, const ModuleEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["reason"] = p.reason;
+  body["module"] = p.module;
+}
+
+void from_json(const json& j, ModuleEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("reason").get_to(p.reason);
+  body.at("module").get_to(p.module);
+}
+
+using LoadedSourceReason = ModuleReason;
+
 struct LoadedSourceEvent : Event {
-  ModuleReason reason;
+  LoadedSourceReason reason;
   Source source;
 };
 
+void to_json(json& j, const LoadedSourceEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["reason"] = p.reason;
+  body["source"] = p.source;
+}
+
+void from_json(const json& j, LoadedSourceEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("reason").get_to(p.reason);
+  body.at("source").get_to(p.source);
+}
+
 enum struct StartMethod {
-  unknown,
   launch,
   attach,
   attachForSuspendedLaunch,
 };
+
+void to_json(json& j, const StartMethod& p) {
+  switch(p) {
+    case StartMethod::launch:
+      j = "launch";
+      break;
+    case StartMethod::attach:
+      j = "attach";
+      break;
+    case StartMethod::attachForSuspendedLaunch:
+      j = "attachForSuspendedLaunch";
+      break;
+    default:
+      throw std::runtime_error {"Unknown StartMethod"};
+  };
+}
+
+void from_json(const json& j, StartMethod& p) {
+  std::string s {j.get<std::string>()};
+  if(s == "launch")
+    p = StartMethod::launch;
+  else if(s == "attach")
+    p = StartMethod::attach;
+  else if(s == "attachForSuspendedLaunch")
+    p = StartMethod::attachForSuspendedLaunch;
+  else
+    throw std::runtime_error {"Unknown StartMethod"};
+}
 
 struct ProcessEvent : Event {
   std::string name;
@@ -1419,9 +2044,41 @@ struct ProcessEvent : Event {
   std::optional<std::int64_t> pointerSize;
 };
 
+void to_json(json& j, const ProcessEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["name"] = p.name;
+  to_optJson(body, "systemProcessId", p.systemProcessId);
+  to_optJson(body, "isLocalProcess", p.isLocalProcess);
+  to_optJson(body, "startMethod", p.startMethod);
+  to_optJson(body, "pointerSize", p.pointerSize);
+}
+
+void from_json(const json& j, ProcessEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("name").get_to(p.name);
+  from_optJson(body, "systemProcessId", p.systemProcessId);
+  from_optJson(body, "isLocalProcess", p.isLocalProcess);
+  from_optJson(body, "startMethod", p.startMethod);
+  from_optJson(body, "pointerSize", p.pointerSize);
+}
+
 struct CapabilitiesEvent : Event {
   Capabilities capabilities;
 };
+
+void to_json(json& j, const CapabilitiesEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["capabilities"] = p.capabilities;
+}
+
+void from_json(const json& j, CapabilitiesEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("capabilities").get_to(p.capabilities);
+}
 
 struct ProgressStartEvent : Event {
   std::string progressId;
@@ -1432,16 +2089,68 @@ struct ProgressStartEvent : Event {
   std::optional<std::int64_t> percentage;
 };
 
+void to_json(json& j, const ProgressStartEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["progressId"] = p.progressId;
+  body["title"] = p.title;
+  to_optJson(body, "requestId", p.requestId);
+  to_optJson(body, "cancellable", p.cancellable);
+  to_optJson(body, "message", p.message);
+  to_optJson(body, "percentage", p.percentage);
+}
+
+void from_json(const json& j, ProgressStartEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("progressId").get_to(p.progressId);
+  body.at("title").get_to(p.title);
+  from_optJson(body, "requestId", p.requestId);
+  from_optJson(body, "cancellable", p.cancellable);
+  from_optJson(body, "message", p.message);
+  from_optJson(body, "percentage", p.percentage);
+}
+
 struct ProgressUpdateEvent : Event {
   std::string progressId;
   std::optional<std::string> message;
   std::optional<std::int64_t> percentage;
 };
 
+void to_json(json& j, const ProgressUpdateEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["progressId"] = p.progressId;
+  to_optJson(body, "message", p.message);
+  to_optJson(body, "percentage", p.percentage);
+}
+
+void from_json(const json& j, ProgressUpdateEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("progressId").get_to(p.progressId);
+  from_optJson(body, "message", p.message);
+  from_optJson(body, "percentage", p.percentage);
+}
+
 struct ProgressEndEvent : Event {
   std::string progressId;
   std::optional<std::string> message;
 };
+
+void to_json(json& j, const ProgressEndEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["progressId"] = p.progressId;
+  to_optJson(body, "message", p.message);
+}
+
+void from_json(const json& j, ProgressEndEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("progressId").get_to(p.progressId);
+  from_optJson(body, "message", p.message);
+}
 
 struct InvalidatedEvent : Event {
   std::optional<std::string> areas;
@@ -1449,14 +2158,45 @@ struct InvalidatedEvent : Event {
   std::optional<std::int64_t> stackFrameId;
 };
 
+void to_json(json& j, const InvalidatedEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  to_optJson(body, "areas", p.areas);
+  to_optJson(body, "threadId", p.threadId);
+  to_optJson(body, "stackFrameId", p.stackFrameId);
+}
+
+void from_json(const json& j, InvalidatedEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  from_optJson(body, "areas", p.areas);
+  from_optJson(body, "threadId", p.threadId);
+  from_optJson(body, "stackFrameId", p.stackFrameId);
+}
+
 struct MemoryEvent : Event {
   std::string memoryReference;
   std::int64_t offset;
   std::int64_t count;
 };
 
+void to_json(json& j, const MemoryEvent& p) {
+  j = static_cast<Event>(p);
+  json& body {j["body"]};
+  body["memoryReference"] = p.memoryReference;
+  body["offset"] = p.offset;
+  body["count"] = p.count;
+}
+
+void from_json(const json& j, MemoryEvent& p) {
+  j.get_to(static_cast<Event&>(p));
+  const json& body {j.at("body")};
+  body.at("memoryReference").get_to(p.memoryReference);
+  body.at("offset").get_to(p.offset);
+  body.at("count").get_to(p.count);
+}
+
 enum struct RunInTerminalKind {
-  unknown,
   integrated,
   external,
 };
@@ -1679,7 +2419,6 @@ struct ScopesResponse : Response {
 };
 
 enum struct VariablesFilter {
-  unknown,
   indexed,
   named,
 };
