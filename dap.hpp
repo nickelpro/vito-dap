@@ -29,6 +29,29 @@ template <> struct adl_serializer<std::variant<std::int64_t, std::string>> {
       p = j.get<std::string>();
   }
 };
+
+template <>
+struct adl_serializer<std::map<std::string, std::optional<std::string>>> {
+  static void to_json(json& j,
+      const std::map<std::string, std::optional<std::string>>& p) {
+    for(const auto& [key, value] : p) {
+      if(value)
+        j[key] = *value;
+      else
+        j[key] = nullptr;
+    }
+  }
+
+  static void from_json(const json& j,
+      std::map<std::string, std::optional<std::string>>& p) {
+    for(const auto& [key, value] : j.items()) {
+      if(value.is_null())
+        p[key] = {};
+      else
+        p[key] = value.get<std::string>();
+    }
+  }
+};
 } // namespace nlohmann
 
 namespace dap {
@@ -1717,16 +1740,19 @@ struct CancelRequest : Request {
 
 void to_json(json& j, const CancelRequest& p) {
   j = static_cast<Request>(p);
-  json& arguments {j["arguments"]};
-  to_optJson(arguments, "requestId", p.requestId);
-  to_optJson(arguments, "progressId", p.progressId);
+  if(p.progressId || p.progressId) {
+    json& arguments {j["arguments"]};
+    to_optJson(arguments, "requestId", p.requestId);
+    to_optJson(arguments, "progressId", p.progressId);
+  }
 }
 
 void from_json(const json& j, CancelRequest& p) {
   j.get_to(static_cast<Request&>(p));
-  const json& arguments {j.at("arguments")};
-  from_optJson(arguments, "requestId", p.requestId);
-  from_optJson(arguments, "progressId", p.progressId);
+  if(auto it {j.find("arguments")}; it != j.end()) {
+    from_optJson(*it, "requestId", p.requestId);
+    from_optJson(*it, "progressId", p.progressId);
+  }
 }
 
 using CancelResponse = Response;
@@ -2201,6 +2227,29 @@ enum struct RunInTerminalKind {
   external,
 };
 
+void to_json(json& j, const RunInTerminalKind& p) {
+  switch(p) {
+    case RunInTerminalKind::integrated:
+      j = "integrated";
+      break;
+    case RunInTerminalKind::external:
+      j = "external";
+      break;
+    default:
+      throw std::runtime_error {"Unknown RunInTerminalKind"};
+  };
+}
+
+void from_json(const json& j, RunInTerminalKind& p) {
+  std::string s {j.get<std::string>()};
+  if(s == "integrated")
+    p = RunInTerminalKind::integrated;
+  else if(s == "external")
+    p = RunInTerminalKind::external;
+  else
+    throw std::runtime_error {"Unknown RunInTerminalKind"};
+}
+
 struct RunInTerminalRequest : Request {
   std::optional<RunInTerminalKind> kind;
   std::optional<std::string> title;
@@ -2209,10 +2258,44 @@ struct RunInTerminalRequest : Request {
   std::optional<std::map<std::string, std::optional<std::string>>> env;
 };
 
+void to_json(json& j, const RunInTerminalRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "kind", p.kind);
+  to_optJson(arguments, "title", p.title);
+  arguments["cwd"] = p.cwd;
+  arguments["args"] = p.args;
+  to_optJson(arguments, "env", p.env);
+}
+
+void from_json(const json& j, RunInTerminalRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "kind", p.kind);
+  from_optJson(arguments, "title", p.title);
+  arguments.at("cwd").get_to(p.cwd);
+  arguments.at("args").get_to(p.args);
+  from_optJson(arguments, "env", p.env);
+}
+
 struct RunInTerminalResponse : Response {
   std::optional<std::int64_t> processId;
   std::optional<std::int64_t> shellProcessId;
 };
+
+void to_json(json& j, const RunInTerminalResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  to_optJson(body, "processId", p.processId);
+  to_optJson(body, "shellProcessId", p.shellProcessId);
+}
+
+void from_json(const json& j, RunInTerminalResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  from_optJson(body, "processId", p.processId);
+  from_optJson(body, "shellProcessId", p.shellProcessId);
+}
 
 struct InitializeRequest : Request {
   std::optional<std::string> clientId;
@@ -2230,33 +2313,128 @@ struct InitializeRequest : Request {
   std::optional<bool> supportsMemoryEvent;
 };
 
+void to_json(json& j, const InitializeRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "clientId", p.clientId);
+  to_optJson(arguments, "clientName", p.clientName);
+  arguments["adapterId"] = p.adapterId;
+  to_optJson(arguments, "locale", p.locale);
+  to_optJson(arguments, "lineStartAt1", p.lineStartAt1);
+  to_optJson(arguments, "columnStartAt1", p.columnStartAt1);
+  to_optJson(arguments, "supportsVariableType", p.supportsVariableType);
+  to_optJson(arguments, "supportsVariablePaging", p.supportsVariablePaging);
+  to_optJson(arguments, "supportsRunInTerminalRequest",
+      p.supportsRunInTerminalRequest);
+  to_optJson(arguments, "supportsMemoryReferences", p.supportsMemoryReferences);
+  to_optJson(arguments, "supportsProgressReporting",
+      p.supportsProgressReporting);
+  to_optJson(arguments, "supportsInvalidatedEvent", p.supportsInvalidatedEvent);
+  to_optJson(arguments, "supportsMemoryEvent", p.supportsMemoryEvent);
+}
+
+void from_json(const json& j, InitializeRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "clientId", p.clientId);
+  from_optJson(arguments, "clientName", p.clientName);
+  arguments.at("adapterId").get_to(p.adapterId);
+  from_optJson(arguments, "locale", p.locale);
+  from_optJson(arguments, "lineStartAt1", p.lineStartAt1);
+  from_optJson(arguments, "columnStartAt1", p.columnStartAt1);
+  from_optJson(arguments, "supportsVariableType", p.supportsVariableType);
+  from_optJson(arguments, "supportsVariablePaging", p.supportsVariablePaging);
+  from_optJson(arguments, "supportsRunInTerminalRequest",
+      p.supportsRunInTerminalRequest);
+  from_optJson(arguments, "supportsMemoryReferences",
+      p.supportsMemoryReferences);
+  from_optJson(arguments, "supportsProgressReporting",
+      p.supportsProgressReporting);
+  from_optJson(arguments, "supportsInvalidatedEvent",
+      p.supportsInvalidatedEvent);
+  from_optJson(arguments, "supportsMemoryEvent", p.supportsMemoryEvent);
+}
+
 struct InitializeResponse : Response {
-  Capabilities body;
+  std::optional<Capabilities> body;
 };
 
-struct ConfigurationDoneRequest : Request {};
+void to_json(json& j, const InitializeResponse& p) {
+  j = static_cast<Response>(p);
+  to_optJson(j, "body", p.body);
+}
 
-struct ConfigurationDoneResponse : Response {};
+void from_json(const json& j, InitializeResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  from_optJson(j, "body", p.body);
+}
+
+using ConfigurationDoneRequest = Request;
+
+using ConfigurationDoneResponse = Response;
 
 struct LaunchRequest : Request {
   std::optional<bool> noDebug;
   std::optional<json> __restart;
 };
 
-struct LaunchResponse : Response {};
+void to_json(json& j, const LaunchRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "noDebug", p.noDebug);
+  to_optJson(arguments, "__restart", p.__restart);
+}
+
+void from_json(const json& j, LaunchRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "noDebug", p.noDebug);
+  from_optJson(arguments, "__restart", p.__restart);
+}
+
+using LaunchResponse = Response;
 
 struct AttachRequest : Request {
   std::optional<json> __restart;
 };
 
-struct AttachResponse : Response {};
+void to_json(json& j, const AttachRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "__restart", p.__restart);
+}
+
+void from_json(const json& j, AttachRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "__restart", p.__restart);
+}
+
+using AttachResponse = Response;
 
 struct RestartRequest : Request {
   std::optional<bool> noDebug;
   std::optional<json> __restart;
 };
 
-struct RestartResponse : Response {};
+void to_json(json& j, const RestartRequest& p) {
+  j = static_cast<Request>(p);
+  if(p.noDebug || p.__restart) {
+    json& arguments {j["arguments"]};
+    to_optJson(arguments, "noDebug", p.noDebug);
+    to_optJson(arguments, "__restart", p.__restart);
+  }
+}
+
+void from_json(const json& j, RestartRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  if(auto it {j.find("arguments")}; it != j.end()) {
+    from_optJson(*it, "noDebug", p.noDebug);
+    from_optJson(*it, "__restart", p.__restart);
+  }
+}
+
+using RestartResponse = Response;
 
 struct DisconnectRequest : Request {
   std::optional<bool> restart;
@@ -2264,13 +2442,44 @@ struct DisconnectRequest : Request {
   std::optional<bool> suspendDebuggee;
 };
 
-struct DisconnectResponse : Response {};
+void to_json(json& j, const DisconnectRequest& p) {
+  j = static_cast<Request>(p);
+  if(p.restart || p.terminateDebuggee || p.suspendDebuggee) {
+    json& arguments {j["arguments"]};
+    to_optJson(arguments, "restart", p.restart);
+    to_optJson(arguments, "terminateDebuggee", p.terminateDebuggee);
+    to_optJson(arguments, "suspendDebuggee", p.suspendDebuggee);
+  }
+}
+
+void from_json(const json& j, DisconnectRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  if(auto it {j.find("arguments")}; it != j.end()) {
+    from_optJson(*it, "restart", p.restart);
+    from_optJson(*it, "terminateDebuggee", p.terminateDebuggee);
+    from_optJson(*it, "suspendDebuggee", p.suspendDebuggee);
+  }
+}
+
+using DisconnectResponse = Response;
 
 struct TerminateRequest : Request {
   std::optional<bool> restart;
 };
 
-struct TerminateResponse : Response {};
+void to_json(json& j, const TerminateRequest& p) {
+  j = static_cast<Request>(p);
+  if(p.restart)
+    j["arguments"]["restart"] = *p.restart;
+}
+
+void from_json(const json& j, TerminateRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  if(auto it {j.find("arguments")}; it != j.end())
+    from_optJson(*it, "restart", p.restart);
+}
+
+using TerminateResponse = Response;
 
 struct BreakpointLocationsRequest : Request {
   Source source;
@@ -2280,17 +2489,73 @@ struct BreakpointLocationsRequest : Request {
   std::optional<std::int64_t> endColumn;
 };
 
-struct BreakpointLocationsRespone : Response {
+void to_json(json& j, const BreakpointLocationsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["source"] = p.source;
+  arguments["line"] = p.line;
+  to_optJson(arguments, "column", p.column);
+  to_optJson(arguments, "endLine", p.endLine);
+  to_optJson(arguments, "endColumn", p.endColumn);
+}
+
+void from_json(const json& j, BreakpointLocationsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("source").get_to(p.source);
+  arguments.at("line").get_to(p.line);
+  from_optJson(arguments, "column", p.column);
+  from_optJson(arguments, "endLine", p.endLine);
+  from_optJson(arguments, "endColumn", p.endColumn);
+}
+
+struct BreakpointLocationsResponse : Response {
   std::vector<BreakpointLocation> breakpoints;
 };
+
+void to_json(json& j, const BreakpointLocationsResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["breakpoints"] = p.breakpoints;
+}
+
+void from_json(const json& j, BreakpointLocationsResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("breakpoints").get_to(p.breakpoints);
+}
 
 struct SetFunctionBreakpointsRequest : Request {
   std::vector<FunctionBreakpoint> breakpoints;
 };
 
+void to_json(json& j, const SetFunctionBreakpointsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["breakpoints"] = p.breakpoints;
+}
+
+void from_json(const json& j, SetFunctionBreakpointsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("breakpoints").get_to(p.breakpoints);
+}
+
 struct SetFunctionBreakpointsResponse : Response {
   std::vector<Breakpoint> breakpoints;
 };
+
+void to_json(json& j, const SetFunctionBreakpointsResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["breakpoints"] = p.breakpoints;
+}
+
+void from_json(const json& j, SetFunctionBreakpointsResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("breakpoints").get_to(p.breakpoints);
+}
 
 struct SetExceptionBreakpointsRequest : Request {
   std::vector<std::string> filters;
@@ -2298,46 +2563,156 @@ struct SetExceptionBreakpointsRequest : Request {
   std::optional<std::vector<ExceptionOptions>> exceptionOptions;
 };
 
+void to_json(json& j, const SetExceptionBreakpointsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["filters"] = p.filters;
+  to_optJson(arguments, "filterOptions", p.filterOptions);
+  to_optJson(arguments, "exceptionOptions", p.exceptionOptions);
+}
+
+void from_json(const json& j, SetExceptionBreakpointsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("filters").get_to(p.filters);
+  from_optJson(arguments, "filterOptions", p.filterOptions);
+  from_optJson(arguments, "exceptionOptions", p.exceptionOptions);
+}
+
 struct SetExceptionBreakpointsResponse : Response {
-  std::vector<Breakpoint> breakpoints;
+  std::optional<std::vector<Breakpoint>> breakpoints;
 };
+
+void to_json(json& j, const SetExceptionBreakpointsResponse& p) {
+  j = static_cast<Response>(p);
+  if(p.breakpoints)
+    j["body"]["breakpoints"] = *p.breakpoints;
+}
+
+void from_json(const json& j, SetExceptionBreakpointsResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  if(auto it {j.find("body")}; it != j.end())
+    from_optJson(*it, "breakpoints", p.breakpoints);
+}
 
 struct DataBreakpointInfoRequest : Request {
   std::optional<std::int64_t> variablesReference;
   std::string name;
 };
 
+void to_json(json& j, const DataBreakpointInfoRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "variablesReference", p.variablesReference);
+  arguments["name"] = p.name;
+}
+
+void from_json(const json& j, DataBreakpointInfoRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "variablesReference", p.variablesReference);
+  arguments.at("name").get_to(p.name);
+}
+
 struct DataBreakpointInfoResponse : Response {
-  std::variant<std::string, nullptr_t> dataId;
+  std::optional<std::string> dataId;
   std::string description;
   std::optional<std::vector<DataBreakpointAccessType>> accessTypes;
   std::optional<bool> canPersist;
 };
 
+void to_json(json& j, const DataBreakpointInfoResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  if(p.dataId)
+    body["dataId"] = *p.dataId;
+  else
+    body["dataId"] = nullptr;
+  body["description"] = p.description;
+  to_optJson(body, "accessTypes", p.accessTypes);
+  to_optJson(body, "canPersist", p.canPersist);
+}
+
+void from_json(const json& j, DataBreakpointInfoResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  if(auto dataId {body.at("dataId")}; !dataId.is_null())
+    p.dataId = dataId;
+  body.at("description").get_to(p.description);
+  from_optJson(body, "accessTypes", p.accessTypes);
+  from_optJson(body, "canPersist", p.canPersist);
+}
+
 struct SetDataBreakpointsRequest : Request {
   std::vector<DataBreakpoint> breakpoints;
 };
 
-struct SetDataBreakpointsResponse : Response {
-  std::vector<Breakpoint> breakpoints;
-};
+void to_json(json& j, const SetDataBreakpointsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["breakpoints"] = p.breakpoints;
+}
+
+void from_json(const json& j, SetDataBreakpointsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("breakpoints").get_to(p.breakpoints);
+}
+
+using SetDataBreakpointsResponse = SetFunctionBreakpointsResponse;
 
 struct SetInstructionBreakpointsRequest : Request {
   std::vector<InstructionBreakpoint> breakpoints;
 };
 
-struct SetInstructionBreakpointsResponse : Response {
-  std::vector<Breakpoint> breakpoints;
-};
+void to_json(json& j, const SetInstructionBreakpointsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["breakpoints"] = p.breakpoints;
+}
+
+void from_json(const json& j, SetInstructionBreakpointsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("breakpoints").get_to(p.breakpoints);
+}
+
+using SetInstructionBreakpointsResponse = SetFunctionBreakpointsResponse;
 
 struct ContinueRequest : Request {
   std::int64_t threadId;
   std::optional<bool> singleThread;
 };
 
+void to_json(json& j, const ContinueRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["threadId"] = p.threadId;
+  to_optJson(arguments, "singleThread", p.singleThread);
+}
+
+void from_json(const json& j, ContinueRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("threadId").get_to(p.threadId);
+  from_optJson(arguments, "singleThread", p.singleThread);
+}
+
 struct ContinueResponse : Response {
   std::optional<bool> allThreadsContinued;
 };
+
+void to_json(json& j, const ContinueResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  to_optJson(body, "allThreadsContinued", p.allThreadsContinued);
+}
+
+void from_json(const json& j, ContinueResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  from_optJson(body, "allThreadsContinued", p.allThreadsContinued);
+}
 
 struct NextRequest : Request {
   std::int64_t threadId;
@@ -2345,7 +2720,23 @@ struct NextRequest : Request {
   std::optional<SteppingGranularity> granularity;
 };
 
-struct NextResponse : Response {};
+void to_json(json& j, const NextRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["threadId"] = p.threadId;
+  to_optJson(arguments, "singleThread", p.singleThread);
+  to_optJson(arguments, "granularity", p.granularity);
+}
+
+void from_json(const json& j, NextRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("threadId").get_to(p.threadId);
+  from_optJson(arguments, "singleThread", p.singleThread);
+  from_optJson(arguments, "granularity", p.granularity);
+}
+
+using NextResponse = Response;
 
 struct StepInRequest : Request {
   int64_t threadId;
@@ -2354,49 +2745,94 @@ struct StepInRequest : Request {
   std::optional<SteppingGranularity> granularity;
 };
 
-struct StepInResponse : Response {};
+void to_json(json& j, const StepInRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["threadId"] = p.threadId;
+  to_optJson(arguments, "singleThread", p.singleThread);
+  to_optJson(arguments, "targetId", p.targetId);
+  to_optJson(arguments, "granularity", p.granularity);
+}
 
-struct StepOutRequest : Request {
-  std::int64_t threadId;
-  std::optional<bool> singleThread;
-  std::optional<SteppingGranularity> granularity;
-};
+void from_json(const json& j, StepInRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("threadId").get_to(p.threadId);
+  from_optJson(arguments, "singleThread", p.singleThread);
+  from_optJson(arguments, "targetId", p.targetId);
+  from_optJson(arguments, "granularity", p.granularity);
+}
 
-struct StepOutResponse : Response {};
+using StepInResponse = Response;
 
-struct StepBackRequest : Request {
-  std::int64_t threadId;
-  std::optional<bool> singleThread;
-  std::optional<bool> granularity;
-};
+using StepOutRequest = NextRequest;
 
-struct StepBackResponse : Response {};
+using StepOutResponse = Response;
 
-struct ReverseContinueRequest : Request {
-  std::int64_t threadId;
-  std::optional<bool> singleThread;
-};
+using StepBackRequest = NextRequest;
 
-struct ReverseContinueResponse : Response {};
+using StepBackResponse = Response;
+
+using ReverseContinueRequest = ContinueRequest;
+
+using ReverseContinueResponse = Response;
 
 struct RestartFrameRequest : Request {
   std::int64_t frameId;
 };
 
-struct RestartFrameResponse : Response {};
+void to_json(json& j, const RestartFrameRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["frameId"] = p.frameId;
+}
+
+void from_json(const json& j, RestartFrameRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("frameId").get_to(p.frameId);
+}
+
+using RestartFrameResponse = Response;
 
 struct GotoRequest : Request {
   std::int64_t threadId;
   std::int64_t targetId;
 };
 
-struct GotoResponse : Response {};
+void to_json(json& j, const GotoRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["threadId"] = p.threadId;
+  arguments["targetId"] = p.targetId;
+}
+
+void from_json(const json& j, GotoRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("threadId").get_to(p.threadId);
+  arguments.at("targetId").get_to(p.targetId);
+}
+
+using GotoResponse = Response;
 
 struct PauseRequest : Request {
   std::int64_t threadId;
 };
 
-struct PauseResponse : Response {};
+void to_json(json& j, const PauseRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["threadId"] = p.threadId;
+}
+
+void from_json(const json& j, PauseRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("threadId").get_to(p.threadId);
+}
+
+using PauseResponse = Response;
 
 struct StackTraceRequest : Request {
   std::int64_t threadId;
@@ -2405,23 +2841,90 @@ struct StackTraceRequest : Request {
   std::optional<StackFrameFormat> format;
 };
 
+void to_json(json& j, const StackTraceRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["threadId"] = p.threadId;
+  to_optJson(arguments, "startFrame", p.startFrame);
+  to_optJson(arguments, "levels", p.levels);
+  to_optJson(arguments, "format", p.format);
+}
+
+void from_json(const json& j, StackTraceRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("threadId").get_to(p.threadId);
+  from_optJson(arguments, "startFrame", p.startFrame);
+  from_optJson(arguments, "levels", p.levels);
+  from_optJson(arguments, "format", p.format);
+}
+
+
 struct StackTraceResponse : Response {
   std::vector<StackFrame> stackFrames;
   std::optional<std::int64_t> totalFrames;
 };
 
-struct ScopesRequest : Request {
-  std::int64_t frameId;
-};
+void to_json(json& j, const StackTraceResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["stackFrames"] = p.stackFrames;
+  to_optJson(body, "totalFrames", p.totalFrames);
+}
+
+void from_json(const json& j, StackTraceResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("stackFrames").get_to(p.stackFrames);
+  from_optJson(body, "totalFrames", p.totalFrames);
+}
+
+using ScopesRequest = RestartFrameRequest;
 
 struct ScopesResponse : Response {
   std::vector<Scope> scopes;
 };
 
+void to_json(json& j, const ScopesResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["scopes"] = p.scopes;
+}
+
+void from_json(const json& j, ScopesResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("scopes").get_to(p.scopes);
+}
+
 enum struct VariablesFilter {
   indexed,
   named,
 };
+
+void to_json(json& j, const VariablesFilter& p) {
+  switch(p) {
+    case VariablesFilter::indexed:
+      j = "indexed";
+      break;
+    case VariablesFilter::named:
+      j = "named";
+      break;
+    default:
+      throw std::runtime_error {"Unknown VariablesFilter"};
+  };
+}
+
+void from_json(const json& j, VariablesFilter& p) {
+  std::string s {j.get<std::string>()};
+  if(s == "indexed")
+    p = VariablesFilter::indexed;
+  else if(s == "named")
+    p = VariablesFilter::named;
+  else
+    throw std::runtime_error {"Unknown VariablesFilter"};
+}
+
 
 struct VariablesRequest : Request {
   std::int64_t variablesReference;
@@ -2431,9 +2934,41 @@ struct VariablesRequest : Request {
   std::optional<ValueFormat> format;
 };
 
+void to_json(json& j, const VariablesRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["variablesReference"] = p.variablesReference;
+  to_optJson(arguments, "filter", p.filter);
+  to_optJson(arguments, "start", p.start);
+  to_optJson(arguments, "count", p.count);
+  to_optJson(arguments, "format", p.format);
+}
+
+void from_json(const json& j, VariablesRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("variablesReference").get_to(p.variablesReference);
+  from_optJson(arguments, "filter", p.filter);
+  from_optJson(arguments, "start", p.start);
+  from_optJson(arguments, "count", p.count);
+  from_optJson(arguments, "format", p.format);
+}
+
 struct VariablesResponse : Response {
   std::vector<Variable> variables;
 };
+
+void to_json(json& j, const VariablesResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["variables"] = p.variables;
+}
+
+void from_json(const json& j, VariablesResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("variables").get_to(p.variables);
+}
 
 struct SetVariableRequest : Request {
   std::int64_t variablesReference;
@@ -2441,6 +2976,24 @@ struct SetVariableRequest : Request {
   std::string value;
   std::optional<ValueFormat> format;
 };
+
+void to_json(json& j, const SetVariableRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["variablesReference"] = p.variablesReference;
+  arguments["name"] = p.name;
+  arguments["value"] = p.value;
+  to_optJson(arguments, "format", p.format);
+}
+
+void from_json(const json& j, SetVariableRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("variablesReference").get_to(p.variablesReference);
+  arguments.at("name").get_to(p.name);
+  arguments.at("value").get_to(p.value);
+  from_optJson(arguments, "format", p.format);
+}
 
 struct SetVariableResponse : Response {
   std::string value;
@@ -2450,37 +3003,155 @@ struct SetVariableResponse : Response {
   std::optional<std::int64_t> indexedVariables;
 };
 
+void to_json(json& j, const SetVariableResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["value"] = p.value;
+  to_optJson(body, "type", p.type);
+  to_optJson(body, "variablesReference", p.variablesReference);
+  to_optJson(body, "namedVariables", p.namedVariables);
+  to_optJson(body, "indexedVariables", p.indexedVariables);
+}
+
+void from_json(const json& j, SetVariableResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("value").get_to(p.value);
+  from_optJson(body, "type", p.type);
+  from_optJson(body, "variablesReference", p.variablesReference);
+  from_optJson(body, "namedVariables", p.namedVariables);
+  from_optJson(body, "indexedVariables", p.indexedVariables);
+}
+
 struct SourceRequest : Request {
   std::optional<Source> source;
   std::int64_t sourceReference;
 };
+
+void to_json(json& j, const SourceRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "source", p.source);
+  arguments["sourceReference"] = p.sourceReference;
+}
+
+void from_json(const json& j, SourceRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "source", p.source);
+  arguments.at("sourceReference").get_to(p.sourceReference);
+}
 
 struct SourceResponse : Response {
   std::string content;
   std::optional<std::string> mimeType;
 };
 
-struct ThreadsRequest : Request {};
+void to_json(json& j, const SourceResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["content"] = p.content;
+  to_optJson(body, "mimeType", p.mimeType);
+}
+
+void from_json(const json& j, SourceResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("content").get_to(p.content);
+  from_optJson(body, "mimeType", p.mimeType);
+}
+
+using ThreadsRequest = Request;
 
 struct ThreadsResponse : Response {
   std::vector<Thread> threads;
 };
+
+void to_json(json& j, const ThreadsResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["threads"] = p.threads;
+}
+
+void from_json(const json& j, ThreadsResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("threads").get_to(p.threads);
+}
+
+struct TerminateThreadsRequest : Request {
+  std::optional<std::vector<std::int64_t>> threadIds;
+};
+
+void to_json(json& j, const TerminateThreadsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "threadIds", p.threadIds);
+}
+
+void from_json(const json& j, TerminateThreadsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "threadIds", p.threadIds);
+}
+
+using TerminateThreadsResponse = Response;
 
 struct ModulesRequest : Request {
   std::optional<std::int64_t> startModule;
   std::optional<std::int64_t> moduleCount;
 };
 
+void to_json(json& j, const ModulesRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "startModule", p.startModule);
+  to_optJson(arguments, "moduleCount", p.moduleCount);
+}
+
+void from_json(const json& j, ModulesRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "startModule", p.startModule);
+  from_optJson(arguments, "moduleCount", p.moduleCount);
+}
+
 struct ModulesResponse : Response {
   std::vector<Module> modules;
   std::optional<std::int64_t> totalModules;
 };
 
-struct LoadedSourcesRequest : Request {};
+void to_json(json& j, const ModulesResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["modules"] = p.modules;
+  to_optJson(body, "totalModules", p.totalModules);
+}
+
+void from_json(const json& j, ModulesResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("modules").get_to(p.modules);
+  from_optJson(body, "totalModules", p.totalModules);
+}
+
+using LoadedSourcesRequest = Request;
 
 struct LoadedSourcesResponse : Response {
   std::vector<Source> sources;
 };
+
+void to_json(json& j, const LoadedSourcesResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["sources"] = p.sources;
+}
+
+void from_json(const json& j, LoadedSourcesResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("sources").get_to(p.sources);
+}
 
 struct EvaluateRequest : Request {
   std::string expression;
@@ -2488,6 +3159,24 @@ struct EvaluateRequest : Request {
   std::optional<std::string> context;
   std::optional<ValueFormat> format;
 };
+
+void to_json(json& j, const EvaluateRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["expression"] = p.expression;
+  to_optJson(arguments, "frameId", p.frameId);
+  to_optJson(arguments, "context", p.context);
+  to_optJson(arguments, "format", p.format);
+}
+
+void from_json(const json& j, EvaluateRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("expression").get_to(p.expression);
+  from_optJson(arguments, "frameId", p.frameId);
+  from_optJson(arguments, "context", p.context);
+  from_optJson(arguments, "format", p.format);
+}
 
 struct EvaluateResponse : Response {
   std::string result;
@@ -2499,12 +3188,54 @@ struct EvaluateResponse : Response {
   std::optional<std::string> memoryReference;
 };
 
+void to_json(json& j, const EvaluateResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["result"] = p.result;
+  to_optJson(body, "type", p.type);
+  to_optJson(body, "presentationHint", p.presentationHint);
+  body["variablesReference"] = p.variablesReference;
+  to_optJson(body, "namedVariables", p.namedVariables);
+  to_optJson(body, "indexedVariables", p.indexedVariables);
+  to_optJson(body, "memoryReference", p.memoryReference);
+}
+
+void from_json(const json& j, EvaluateResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("result").get_to(p.result);
+  from_optJson(body, "type", p.type);
+  from_optJson(body, "presentationHint", p.presentationHint);
+  body.at("variablesReference").get_to(p.variablesReference);
+  from_optJson(body, "namedVariables", p.namedVariables);
+  from_optJson(body, "indexedVariables", p.indexedVariables);
+  from_optJson(body, "memoryReference", p.memoryReference);
+}
+
 struct SetExpressionRequest : Request {
   std::string expression;
   std::string value;
   std::optional<std::int64_t> frameId;
   std::optional<ValueFormat> format;
 };
+
+void to_json(json& j, const SetExpressionRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["expression"] = p.expression;
+  arguments["value"] = p.value;
+  to_optJson(arguments, "frameId", p.frameId);
+  to_optJson(arguments, "format", p.format);
+}
+
+void from_json(const json& j, SetExpressionRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("expression").get_to(p.expression);
+  arguments.at("value").get_to(p.value);
+  from_optJson(arguments, "frameId", p.frameId);
+  from_optJson(arguments, "format", p.format);
+}
 
 struct SetExpressionResponse : Response {
   std::string value;
@@ -2515,13 +3246,59 @@ struct SetExpressionResponse : Response {
   std::optional<std::int64_t> indexedVariables;
 };
 
+void to_json(json& j, const SetExpressionResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["value"] = p.value;
+  to_optJson(body, "type", p.type);
+  to_optJson(body, "presentationHint", p.presentationHint);
+  to_optJson(body, "variablesReference", p.variablesReference);
+  to_optJson(body, "namedVariables", p.namedVariables);
+  to_optJson(body, "indexedVariables", p.indexedVariables);
+}
+
+void from_json(const json& j, SetExpressionResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("value").get_to(p.value);
+  from_optJson(body, "type", p.type);
+  from_optJson(body, "presentationHint", p.presentationHint);
+  from_optJson(body, "variablesReference", p.variablesReference);
+  from_optJson(body, "namedVariables", p.namedVariables);
+  from_optJson(body, "indexedVariables", p.indexedVariables);
+}
+
 struct StepInTargetsRequest : Request {
   std::int64_t frameId;
 };
 
+void to_json(json& j, const StepInTargetsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["frameId"] = p.frameId;
+}
+
+void from_json(const json& j, StepInTargetsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("frameId").get_to(p.frameId);
+}
+
 struct StepInTargetsResponse : Response {
   std::vector<StepInTarget> targets;
 };
+
+void to_json(json& j, const StepInTargetsResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["targets"] = p.targets;
+}
+
+void from_json(const json& j, StepInTargetsResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("targets").get_to(p.targets);
+}
 
 struct GotoTargetsRequest : Request {
   Source source;
@@ -2529,9 +3306,37 @@ struct GotoTargetsRequest : Request {
   std::optional<std::int64_t> column;
 };
 
+void to_json(json& j, const GotoTargetsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["source"] = p.source;
+  arguments["line"] = p.line;
+  to_optJson(arguments, "column", p.column);
+}
+
+void from_json(const json& j, GotoTargetsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("source").get_to(p.source);
+  arguments.at("line").get_to(p.line);
+  from_optJson(arguments, "column", p.column);
+}
+
 struct GotoTargetsResponse : Response {
   std::vector<GotoTarget> targets;
 };
+
+void to_json(json& j, const GotoTargetsResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["targets"] = p.targets;
+}
+
+void from_json(const json& j, GotoTargetsResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("targets").get_to(p.targets);
+}
 
 struct CompletionsRequest : Request {
   std::optional<std::int64_t> frameId;
@@ -2540,13 +3345,41 @@ struct CompletionsRequest : Request {
   std::optional<std::int64_t> line;
 };
 
+void to_json(json& j, const CompletionsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "frameId", p.frameId);
+  arguments["text"] = p.text;
+  arguments["column"] = p.column;
+  to_optJson(arguments, "line", p.line);
+}
+
+void from_json(const json& j, CompletionsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "frameId", p.frameId);
+  arguments.at("text").get_to(p.text);
+  arguments.at("column").get_to(p.column);
+  from_optJson(arguments, "line", p.line);
+}
+
 struct CompletionsResponse : Response {
   std::vector<CompletionItem> targets;
 };
 
-struct ExceptionInfoRequest : Request {
-  std::int64_t threadId;
-};
+void to_json(json& j, const CompletionsResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["targets"] = p.targets;
+}
+
+void from_json(const json& j, CompletionsResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("targets").get_to(p.targets);
+}
+
+using ExceptionInfoRequest = PauseRequest;
 
 struct ExceptionInfoResponse : Response {
   std::string exceptionId;
@@ -2555,17 +3388,67 @@ struct ExceptionInfoResponse : Response {
   std::optional<ExceptionDetails> details;
 };
 
+void to_json(json& j, const ExceptionInfoResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["exceptionId"] = p.exceptionId;
+  to_optJson(body, "description", p.description);
+  body["breakMode"] = p.breakMode;
+  to_optJson(body, "details", p.details);
+}
+
+void from_json(const json& j, ExceptionInfoResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("exceptionId").get_to(p.exceptionId);
+  from_optJson(body, "description", p.description);
+  body.at("breakMode").get_to(p.breakMode);
+  from_optJson(body, "details", p.details);
+}
+
 struct ReadMemoryRequest : Request {
   std::string memoryReference;
   std::optional<std::int64_t> offset;
   std::int64_t count;
 };
 
+void to_json(json& j, const ReadMemoryRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["memoryReference"] = p.memoryReference;
+  to_optJson(arguments, "offset", p.offset);
+  arguments["count"] = p.count;
+}
+
+void from_json(const json& j, ReadMemoryRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("memoryReference").get_to(p.memoryReference);
+  from_optJson(arguments, "offset", p.offset);
+  arguments.at("count").get_to(p.count);
+}
+
 struct ReadMemoryResponse : Response {
   std::string address;
   std::optional<std::int64_t> unreadableBytes;
   std::optional<std::string> data;
 };
+
+void to_json(json& j, const ReadMemoryResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["address"] = p.address;
+  to_optJson(body, "unreadableBytes", p.unreadableBytes);
+  to_optJson(body, "data", p.data);
+}
+
+void from_json(const json& j, ReadMemoryResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("address").get_to(p.address);
+  from_optJson(body, "unreadableBytes", p.unreadableBytes);
+  from_optJson(body, "data", p.data);
+}
 
 struct WriteMemoryRequest : Request {
   std::string memoryReference;
@@ -2574,10 +3457,42 @@ struct WriteMemoryRequest : Request {
   std::string data;
 };
 
+void to_json(json& j, const WriteMemoryRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["memoryReference"] = p.memoryReference;
+  to_optJson(arguments, "offset", p.offset);
+  to_optJson(arguments, "allowPartial", p.allowPartial);
+  arguments["data"] = p.data;
+}
+
+void from_json(const json& j, WriteMemoryRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("memoryReference").get_to(p.memoryReference);
+  from_optJson(arguments, "offset", p.offset);
+  from_optJson(arguments, "allowPartial", p.allowPartial);
+  arguments.at("data").get_to(p.data);
+}
+
 struct WriteMemoryResponse : Response {
   std::optional<std::int64_t> offset;
   std::optional<std::int64_t> bytesWritten;
 };
+
+void to_json(json& j, const WriteMemoryResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  to_optJson(body, "offset", p.offset);
+  to_optJson(body, "bytesWritten", p.bytesWritten);
+}
+
+void from_json(const json& j, WriteMemoryResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  from_optJson(body, "offset", p.offset);
+  from_optJson(body, "bytesWritten", p.bytesWritten);
+}
 
 struct DisassembleRequest : Request {
   std::string memoryReference;
@@ -2587,9 +3502,41 @@ struct DisassembleRequest : Request {
   std::optional<bool> resolveSymbols;
 };
 
+void to_json(json& j, const DisassembleRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["memoryReference"] = p.memoryReference;
+  to_optJson(arguments, "offset", p.offset);
+  to_optJson(arguments, "instructionOffset", p.instructionOffset);
+  arguments["instructionCount"] = p.instructionCount;
+  to_optJson(arguments, "resolveSymbols", p.resolveSymbols);
+}
+
+void from_json(const json& j, DisassembleRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("memoryReference").get_to(p.memoryReference);
+  from_optJson(arguments, "offset", p.offset);
+  from_optJson(arguments, "instructionOffset", p.instructionOffset);
+  arguments.at("instructionCount").get_to(p.instructionCount);
+  from_optJson(arguments, "resolveSymbols", p.resolveSymbols);
+}
+
 struct DisassembleResponse : Response {
   std::vector<DisassembledInstruction> instructions;
 };
+
+void to_json(json& j, const DisassembleResponse& p) {
+  j = static_cast<Response>(p);
+  json& body {j["body"]};
+  body["instructions"] = p.instructions;
+}
+
+void from_json(const json& j, DisassembleResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& body {j.at("body")};
+  body.at("instructions").get_to(p.instructions);
+}
 
 } // namespace dap
 
