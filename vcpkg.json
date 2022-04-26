@@ -1,5 +1,5 @@
 {
-  "name": "vito-dap",
+  "name": "vdap",
   "version": "0.0.1",
   "description": "Vito's Debug Adaptor Protocol Implementation",
   "homepage": "https://github.com/nickelpro/vito-dap",
@@ -8,7 +8,6 @@
   ],
   "license": "Zlib",
   "dependencies": [
-    "fmt",
     "nlohmann-json"
   ]
 }
