@@ -1742,6 +1742,8 @@ void from_json(const json& j, ErrorResponse& p) {
 }
 
 struct CancelRequest : Request {
+  static constexpr CommandType command_id {CommandType::cancel};
+
   std::optional<std::int64_t> requestId;
   std::optional<std::string> progressId;
 };
@@ -1763,7 +1765,17 @@ void from_json(const json& j, CancelRequest& p) {
   }
 }
 
-using CancelResponse = Response;
+struct CancelResponse : Response {
+  static constexpr CommandType command_id {CommandType::cancel};
+};
+
+void to_json(json& j, const CancelResponse& p) {
+  j = static_cast<Response>(p);
+}
+
+void from_json(const json& j, CancelResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+}
 
 struct InitializedEvent : Event {
   static constexpr EventType event_id {EventType::initialized};
