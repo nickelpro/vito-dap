@@ -544,6 +544,30 @@ void from_json(const json& j, Source& p) {
   from_optJson(j, "checksums", p.checksums);
 }
 
+struct SourceBreakpoint {
+  std::int64_t line;
+  std::optional<std::int64_t> number;
+  std::optional<std::string> condition;
+  std::optional<std::string> hitCondition;
+  std::optional<std::string> logMessage;
+};
+
+void to_json(json& j, const SourceBreakpoint& p) {
+  j["line"] = p.line;
+  to_optJson(j, "number", p.number);
+  to_optJson(j, "condition", p.condition);
+  to_optJson(j, "hitCondition", p.hitCondition);
+  to_optJson(j, "logMessage", p.logMessage);
+}
+
+void from_json(const json& j, SourceBreakpoint& p) {
+  j.at("line").get_to(p.line);
+  from_optJson(j, "number", p.number);
+  from_optJson(j, "condition", p.condition);
+  from_optJson(j, "hitCondition", p.hitCondition);
+  from_optJson(j, "logMessage", p.logMessage);
+}
+
 struct InstructionBreakpoint {
   std::string instructionReference;
   std::optional<std::int64_t> offset;
@@ -2679,6 +2703,51 @@ void from_json(const json& j, BreakpointLocationsResponse& p) {
   body.at("breakpoints").get_to(p.breakpoints);
 }
 
+struct SetBreakPointsRequest : Request {
+  static constexpr CommandType command_id {CommandType::setBreakpoints};
+
+  Source source;
+  std::optional<std::vector<SourceBreakpoint>> breakpoints;
+  std::optional<std::vector<std::int64_t>> lines;
+  std::optional<bool> sourceModified;
+};
+
+void to_json(json& j, const SetBreakPointsRequest& p) {
+  j = static_cast<Request>(p);
+  json& arguments {j["arguments"]};
+  arguments["source"] = p.source;
+  to_optJson(arguments, "breakpoints", p.breakpoints);
+  to_optJson(arguments, "lines", p.lines);
+  to_optJson(arguments, "sourceModified", p.sourceModified);
+}
+
+void from_json(const json& j, SetBreakPointsRequest& p) {
+  j.get_to(static_cast<Request&>(p));
+  const json& arguments {j.at("arguments")};
+  arguments.at("source").get_to(p.source);
+  from_optJson(arguments, "breakpoints", p.breakpoints);
+  from_optJson(arguments, "lines", p.lines);
+  from_optJson(arguments, "sourceModified", p.sourceModified);
+}
+
+struct SetBreakPointsResponse : Response {
+  static constexpr CommandType command_id {CommandType::setBreakpoints};
+
+  std::optional<std::vector<SourceBreakpoint>> breakpoints;
+};
+
+void to_json(json& j, const SetBreakPointsResponse& p) {
+  j = static_cast<Response>(p);
+  json& arguments {j["arguments"]};
+  to_optJson(arguments, "breakpoints", p.breakpoints);
+}
+
+void from_json(const json& j, SetBreakPointsResponse& p) {
+  j.get_to(static_cast<Response&>(p));
+  const json& arguments {j.at("arguments")};
+  from_optJson(arguments, "breakpoints", p.breakpoints);
+}
+
 struct SetFunctionBreakpointsRequest : Request {
   static constexpr CommandType command_id {CommandType::setFunctionBreakpoints};
 
@@ -3129,21 +3198,21 @@ void from_json(const json& j, RestartFrameResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
-struct GotoRequest : Request {
+struct GoToRequest : Request {
   static constexpr CommandType command_id {CommandType::goto_};
 
   std::int64_t threadId;
   std::int64_t targetId;
 };
 
-void to_json(json& j, const GotoRequest& p) {
+void to_json(json& j, const GoToRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["threadId"] = p.threadId;
   arguments["targetId"] = p.targetId;
 }
 
-void from_json(const json& j, GotoRequest& p) {
+void from_json(const json& j, GoToRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("threadId").get_to(p.threadId);
@@ -3835,15 +3904,15 @@ void from_json(const json& j, CompletionsResponse& p) {
   body.at("targets").get_to(p.targets);
 }
 
-struct ExceptionInfo : PauseBaseRequest {
+struct ExceptionInfoRequest : PauseBaseRequest {
   static constexpr CommandType command_id {CommandType::exceptionInfo};
 };
 
-void to_json(json& j, const ExceptionInfo& p) {
+void to_json(json& j, const ExceptionInfoRequest& p) {
   j = static_cast<PauseBaseRequest>(p);
 }
 
-void from_json(const json& j, ExceptionInfo& p) {
+void from_json(const json& j, ExceptionInfoRequest& p) {
   j.get_to(static_cast<PauseBaseRequest&>(p));
 }
 
@@ -4016,6 +4085,250 @@ void from_json(const json& j, DisassembleResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("instructions").get_to(p.instructions);
+}
+
+std::string serialize(const ProtocolMessage& pm) {
+  switch(pm.type) {
+    case MessageType::request: {
+      const auto& req {static_cast<const Request&>(pm)};
+      switch(req.command) {
+        case CommandType::cancel:
+          return json(static_cast<const CancelRequest&>(req)).dump();
+        case CommandType::runInTerminal:
+          return json(static_cast<const RunInTerminalRequest&>(req)).dump();
+        case CommandType::initialize:
+          return json(static_cast<const InitializeRequest&>(req)).dump();
+        case CommandType::configurationDone:
+          return json(static_cast<const ConfigurationDoneRequest&>(req)).dump();
+        case CommandType::launch:
+          return json(static_cast<const LaunchRequest&>(req)).dump();
+        case CommandType::attach:
+          return json(static_cast<const AttachRequest&>(req)).dump();
+        case CommandType::restart:
+          return json(static_cast<const RestartRequest&>(req)).dump();
+        case CommandType::disconnect:
+          return json(static_cast<const DisconnectRequest&>(req)).dump();
+        case CommandType::terminate:
+          return json(static_cast<const TerminateRequest&>(req)).dump();
+        case CommandType::breakpointLocations:
+          return json(static_cast<const BreakpointLocationsRequest&>(req))
+              .dump();
+        case CommandType::setBreakpoints:
+          return json(static_cast<const SetBreakPointsRequest&>(req)).dump();
+        case CommandType::setFunctionBreakpoints:
+          return json(static_cast<const SetFunctionBreakpointsRequest&>(req))
+              .dump();
+        case CommandType::setExceptionBreakpoints:
+          return json(static_cast<const SetExceptionBreakpointsRequest&>(req))
+              .dump();
+        case CommandType::dataBreakpointInfo:
+          return json(static_cast<const DataBreakpointInfoRequest&>(req))
+              .dump();
+        case CommandType::setDataBreakpoints:
+          return json(static_cast<const SetDataBreakpointsRequest&>(req))
+              .dump();
+        case CommandType::setInstructionBreakpoints:
+          return json(static_cast<const SetInstructionBreakpointsRequest&>(req))
+              .dump();
+        case CommandType::continue_:
+          return json(static_cast<const ContinueRequest&>(req)).dump();
+        case CommandType::next:
+          return json(static_cast<const NextRequest&>(req)).dump();
+        case CommandType::stepIn:
+          return json(static_cast<const StepInRequest&>(req)).dump();
+        case CommandType::stepOut:
+          return json(static_cast<const StepOutRequest&>(req)).dump();
+        case CommandType::stepBack:
+          return json(static_cast<const StepBackRequest&>(req)).dump();
+        case CommandType::reverseContinue:
+          return json(static_cast<const ReverseContinueRequest&>(req)).dump();
+        case CommandType::restartFrame:
+          return json(static_cast<const RestartFrameRequest&>(req)).dump();
+        case CommandType::goto_:
+          return json(static_cast<const GoToRequest&>(req)).dump();
+        case CommandType::pause:
+          return json(static_cast<const PauseRequest&>(req)).dump();
+        case CommandType::stackTrace:
+          return json(static_cast<const StackTraceRequest&>(req)).dump();
+        case CommandType::scopes:
+          return json(static_cast<const ScopesRequest&>(req)).dump();
+        case CommandType::variables:
+          return json(static_cast<const VariablesRequest&>(req)).dump();
+        case CommandType::setVariable:
+          return json(static_cast<const SetVariableRequest&>(req)).dump();
+        case CommandType::source:
+          return json(static_cast<const SourceRequest&>(req)).dump();
+        case CommandType::threads:
+          return json(static_cast<const ThreadsRequest&>(req)).dump();
+        case CommandType::terminateThreads:
+          return json(static_cast<const TerminateThreadsRequest&>(req)).dump();
+        case CommandType::modules:
+          return json(static_cast<const ModulesRequest&>(req)).dump();
+        case CommandType::loadedSources:
+          return json(static_cast<const LoadedSourcesRequest&>(req)).dump();
+        case CommandType::evaluate:
+          return json(static_cast<const EvaluateRequest&>(req)).dump();
+        case CommandType::setExpression:
+          return json(static_cast<const SetExpressionRequest&>(req)).dump();
+        case CommandType::stepInTargets:
+          return json(static_cast<const StepInTargetsRequest&>(req)).dump();
+        case CommandType::gotoTargets:
+          return json(static_cast<const GotoTargetsRequest&>(req)).dump();
+        case CommandType::completions:
+          return json(static_cast<const CompletionsRequest&>(req)).dump();
+        case CommandType::exceptionInfo:
+          return json(static_cast<const ExceptionInfoRequest&>(req)).dump();
+        case CommandType::readMemory:
+          return json(static_cast<const ReadMemoryRequest&>(req)).dump();
+        case CommandType::writeMemory:
+          return json(static_cast<const WriteMemoryRequest&>(req)).dump();
+        case CommandType::disassemble:
+          return json(static_cast<const DisassembleRequest&>(req)).dump();
+      }
+    } break;
+    case MessageType::response: {
+      const auto& resp {static_cast<const Response&>(pm)};
+      if(!resp.success)
+        return json(static_cast<const ErrorResponse&>(resp)).dump();
+      switch(resp.command) {
+        case CommandType::cancel:
+          return json(static_cast<const CancelResponse&>(resp)).dump();
+        case CommandType::runInTerminal:
+          return json(static_cast<const RunInTerminalResponse&>(resp)).dump();
+        case CommandType::initialize:
+          return json(static_cast<const InitializeResponse&>(resp)).dump();
+        case CommandType::configurationDone:
+          return json(static_cast<const ConfigurationDoneResponse&>(resp))
+              .dump();
+        case CommandType::launch:
+          return json(static_cast<const LaunchResponse&>(resp)).dump();
+        case CommandType::attach:
+          return json(static_cast<const AttachResponse&>(resp)).dump();
+        case CommandType::restart:
+          return json(static_cast<const RestartResponse&>(resp)).dump();
+        case CommandType::disconnect:
+          return json(static_cast<const DisconnectResponse&>(resp)).dump();
+        case CommandType::terminate:
+          return json(static_cast<const TerminateResponse&>(resp)).dump();
+        case CommandType::breakpointLocations:
+          return json(static_cast<const BreakpointLocationsResponse&>(resp))
+              .dump();
+        case CommandType::setBreakpoints:
+          return json(static_cast<const SetBreakPointsResponse&>(resp)).dump();
+        case CommandType::setFunctionBreakpoints:
+          return json(static_cast<const SetFunctionBreakpointsResponse&>(resp))
+              .dump();
+        case CommandType::setExceptionBreakpoints:
+          return json(static_cast<const SetExceptionBreakpointsResponse&>(resp))
+              .dump();
+        case CommandType::dataBreakpointInfo:
+          return json(static_cast<const DataBreakpointInfoResponse&>(resp))
+              .dump();
+        case CommandType::setDataBreakpoints:
+          return json(static_cast<const SetDataBreakpointsResponse&>(resp))
+              .dump();
+        case CommandType::setInstructionBreakpoints:
+          return json(
+              static_cast<const SetInstructionBreakpointsResponse&>(resp))
+              .dump();
+        case CommandType::continue_:
+          return json(static_cast<const ContinueResponse&>(resp)).dump();
+        case CommandType::next:
+          return json(static_cast<const NextResponse&>(resp)).dump();
+        case CommandType::stepIn:
+          return json(static_cast<const StepInResponse&>(resp)).dump();
+        case CommandType::stepOut:
+          return json(static_cast<const StepOutResponse&>(resp)).dump();
+        case CommandType::stepBack:
+          return json(static_cast<const StepBackResponse&>(resp)).dump();
+        case CommandType::reverseContinue:
+          return json(static_cast<const ReverseContinueResponse&>(resp)).dump();
+        case CommandType::restartFrame:
+          return json(static_cast<const RestartFrameResponse&>(resp)).dump();
+        case CommandType::goto_:
+          return json(static_cast<const GoToResponse&>(resp)).dump();
+        case CommandType::pause:
+          return json(static_cast<const PauseResponse&>(resp)).dump();
+        case CommandType::stackTrace:
+          return json(static_cast<const StackTraceResponse&>(resp)).dump();
+        case CommandType::scopes:
+          return json(static_cast<const ScopesResponse&>(resp)).dump();
+        case CommandType::variables:
+          return json(static_cast<const VariablesResponse&>(resp)).dump();
+        case CommandType::setVariable:
+          return json(static_cast<const SetVariableResponse&>(resp)).dump();
+        case CommandType::source:
+          return json(static_cast<const SourceResponse&>(resp)).dump();
+        case CommandType::threads:
+          return json(static_cast<const ThreadsResponse&>(resp)).dump();
+        case CommandType::terminateThreads:
+          return json(static_cast<const TerminateThreadsResponse&>(resp))
+              .dump();
+        case CommandType::modules:
+          return json(static_cast<const ModulesResponse&>(resp)).dump();
+        case CommandType::loadedSources:
+          return json(static_cast<const LoadedSourcesResponse&>(resp)).dump();
+        case CommandType::evaluate:
+          return json(static_cast<const EvaluateResponse&>(resp)).dump();
+        case CommandType::setExpression:
+          return json(static_cast<const SetExpressionResponse&>(resp)).dump();
+        case CommandType::stepInTargets:
+          return json(static_cast<const StepInTargetsResponse&>(resp)).dump();
+        case CommandType::gotoTargets:
+          return json(static_cast<const GotoTargetsResponse&>(resp)).dump();
+        case CommandType::completions:
+          return json(static_cast<const CompletionsResponse&>(resp)).dump();
+        case CommandType::exceptionInfo:
+          return json(static_cast<const ExceptionInfoResponse&>(resp)).dump();
+        case CommandType::readMemory:
+          return json(static_cast<const ReadMemoryResponse&>(resp)).dump();
+        case CommandType::writeMemory:
+          return json(static_cast<const WriteMemoryResponse&>(resp)).dump();
+        case CommandType::disassemble:
+          return json(static_cast<const DisassembleResponse&>(resp)).dump();
+      }
+    } break;
+    case MessageType::event: {
+      const auto& event {static_cast<const Event&>(pm)};
+      switch(event.event) {
+        case EventType::initialized:
+          return json(static_cast<const InitializedEvent&>(event)).dump();
+        case EventType::stopped:
+          return json(static_cast<const StoppedEvent&>(event)).dump();
+        case EventType::continued:
+          return json(static_cast<const ContinuedEvent&>(event)).dump();
+        case EventType::exited:
+          return json(static_cast<const ExitedEvent&>(event)).dump();
+        case EventType::thread:
+          return json(static_cast<const ThreadEvent&>(event)).dump();
+        case EventType::output:
+          return json(static_cast<const OutputEvent&>(event)).dump();
+        case EventType::breakpoint:
+          return json(static_cast<const BreakpointEvent&>(event)).dump();
+        case EventType::module:
+          return json(static_cast<const ModuleEvent&>(event)).dump();
+        case EventType::loadedSource:
+          return json(static_cast<const LoadedSourceEvent&>(event)).dump();
+        case EventType::process:
+          return json(static_cast<const ProcessEvent&>(event)).dump();
+        case EventType::capabilities:
+          return json(static_cast<const CapabilitiesEvent&>(event)).dump();
+        case EventType::progressStart:
+          return json(static_cast<const ProgressStartEvent&>(event)).dump();
+        case EventType::progressUpdate:
+          return json(static_cast<const ProgressUpdateEvent&>(event)).dump();
+        case EventType::progressEnd:
+          return json(static_cast<const ProgressEndEvent&>(event)).dump();
+        case EventType::invalidated:
+          return json(static_cast<const InvalidatedEvent&>(event)).dump();
+        case EventType::memory:
+          return json(static_cast<const MemoryEvent&>(event)).dump();
+        case EventType::terminated:
+          return json(static_cast<const TerminatedEvent&>(event)).dump();
+      }
+    } break;
+  }
+  return "";
 }
 
 } // namespace dap
