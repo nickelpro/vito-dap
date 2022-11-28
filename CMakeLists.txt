@@ -43,3 +43,9 @@ install(
   FILE_SET HEADERS
 )
 install(EXPORT vdapTarget NAMESPACE vdap:: DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/vdap)
+
+option(BUILD_TESTS "Builds test binaries and adds them to CTest" FALSE)
+if(BUILD_TESTS)
+  add_executable(test test/test.cpp)
+  target_link_libraries(test PRIVATE vdap)
+endif()

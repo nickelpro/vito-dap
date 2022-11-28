@@ -12,7 +12,12 @@ jobs:
           submodules: recursive
 
       - name: Configure
-        run: cmake . -DCMAKE_CXX_COMPILER=g++-11
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_CXX_COMPILER=g++-11 -DBUILD_TESTS=TRUE
 
       - name: Build
-        run: cmake --build . --config Release
+        run: |
+          cd build
+          cmake --build . --config Release

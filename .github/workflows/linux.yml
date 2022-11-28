@@ -18,7 +18,12 @@ jobs:
           submodules: recursive
 
       - name: Configure
-        run: cmake . -G Ninja
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G Ninja -DBUILD_TESTS=TRUE
 
       - name: Build
-        run: cmake --build . --config Release
+        run: |
+          cd build
+          cmake --build . --config Release
