@@ -1310,6 +1310,7 @@ void from_json(const json& j, MessageType& p) {
 
 
 struct ProtocolMessage {
+  ProtocolMessage() {}
   ProtocolMessage(MessageType type) : type {type} {}
 
   std::int64_t seq;
@@ -1582,6 +1583,7 @@ void from_json(const json& j, CommandType& p) {
 }
 
 struct Request : ProtocolMessage {
+  Request() {}
   Request(CommandType cmd)
       : ProtocolMessage {MessageType::request}, command {cmd} {}
 
@@ -1718,6 +1720,7 @@ void from_json(const json& j, EventType& p) {
 }
 
 struct Event : ProtocolMessage {
+  Event() {}
   Event(EventType event)
       : ProtocolMessage {MessageType::event}, event {event} {};
 
@@ -1735,6 +1738,7 @@ void from_json(const json& j, Event& p) {
 }
 
 struct Response : ProtocolMessage {
+  Response() {}
   Response(CommandType cmd, bool success)
       : ProtocolMessage {MessageType::response}, command {cmd}, //
         success {success} {};
@@ -1762,6 +1766,7 @@ void from_json(const json& j, Response& p) {
 }
 
 struct ErrorResponse : Response {
+  ErrorResponse() {}
   ErrorResponse(CommandType cmd) : Response {cmd, false} {}
 
   std::optional<std::string> error;
