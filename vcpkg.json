@@ -1,6 +1,6 @@
 {
   "name": "vdap",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Vito's Debug Adaptor Protocol Implementation",
   "homepage": "https://github.com/nickelpro/vito-dap",
   "maintainers": [

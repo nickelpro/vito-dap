@@ -5,7 +5,7 @@ set(CMAKE_TOOLCHAIN_FILE
   CACHE STRING "Vcpkg toolchain file"
 )
 
-project(vito-dap LANGUAGES CXX VERSION 0.0.4)
+project(vito-dap LANGUAGES CXX VERSION 0.0.5)
 
 find_package(nlohmann_json CONFIG REQUIRED)
 

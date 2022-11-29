@@ -1310,6 +1310,8 @@ void from_json(const json& j, MessageType& p) {
 
 
 struct ProtocolMessage {
+  ProtocolMessage(MessageType type) : type {type} {}
+
   std::int64_t seq;
   MessageType type;
 };
@@ -1580,6 +1582,9 @@ void from_json(const json& j, CommandType& p) {
 }
 
 struct Request : ProtocolMessage {
+  Request(CommandType cmd)
+      : ProtocolMessage {MessageType::request}, command {cmd} {}
+
   CommandType command;
 };
 
@@ -1713,6 +1718,9 @@ void from_json(const json& j, EventType& p) {
 }
 
 struct Event : ProtocolMessage {
+  Event(EventType event)
+      : ProtocolMessage {MessageType::event}, event {event} {};
+
   EventType event;
 };
 
@@ -1727,9 +1735,13 @@ void from_json(const json& j, Event& p) {
 }
 
 struct Response : ProtocolMessage {
+  Response(CommandType cmd, bool success)
+      : ProtocolMessage {MessageType::response}, command {cmd}, //
+        success {success} {};
+
   std::int64_t request_seq;
-  bool success;
   CommandType command;
+  bool success;
   std::optional<std::string> message;
 };
 
@@ -1750,6 +1762,8 @@ void from_json(const json& j, Response& p) {
 }
 
 struct ErrorResponse : Response {
+  ErrorResponse(CommandType cmd) : Response {cmd, false} {}
+
   std::optional<std::string> error;
 };
 
@@ -1765,8 +1779,11 @@ void from_json(const json& j, ErrorResponse& p) {
   from_optJson(body, "error", p.error);
 }
 
+
 struct CancelRequest : Request {
   static constexpr CommandType command_id {CommandType::cancel};
+
+  CancelRequest() : Request {command_id} {}
 
   std::optional<std::int64_t> requestId;
   std::optional<std::string> progressId;
@@ -1791,6 +1808,8 @@ void from_json(const json& j, CancelRequest& p) {
 
 struct CancelResponse : Response {
   static constexpr CommandType command_id {CommandType::cancel};
+
+  CancelResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const CancelResponse& p) {
@@ -1803,6 +1822,8 @@ void from_json(const json& j, CancelResponse& p) {
 
 struct InitializedEvent : Event {
   static constexpr EventType event_id {EventType::initialized};
+
+  InitializedEvent() : Event {event_id} {}
 };
 
 void to_json(json& j, const InitializedEvent& p) {
@@ -1815,6 +1836,8 @@ void from_json(const json& j, InitializedEvent& p) {
 
 struct StoppedEvent : Event {
   static constexpr EventType event_id {EventType::stopped};
+
+  StoppedEvent() : Event {event_id} {}
 
   std::string reason;
   std::optional<std::string> description;
@@ -1852,6 +1875,8 @@ void from_json(const json& j, StoppedEvent& p) {
 struct ContinuedEvent : Event {
   static constexpr EventType event_id {EventType::continued};
 
+  ContinuedEvent() : Event {event_id} {}
+
   std::int64_t threadId;
   std::optional<bool> allThreadsContinued;
 };
@@ -1873,6 +1898,8 @@ void from_json(const json& j, ContinuedEvent& p) {
 struct ExitedEvent : Event {
   static constexpr EventType event_id {EventType::exited};
 
+  ExitedEvent() : Event {event_id} {}
+
   std::int64_t exitCode;
 };
 
@@ -1891,6 +1918,8 @@ void from_json(const json& j, ExitedEvent& p) {
 struct TerminatedEvent : Event {
   static constexpr EventType event_id {EventType::terminated};
 
+  TerminatedEvent() : Event {event_id} {}
+
   std::optional<json> restart;
 };
 
@@ -1908,6 +1937,8 @@ void from_json(const json& j, TerminatedEvent& p) {
 
 struct ThreadEvent : Event {
   static constexpr EventType event_id {EventType::thread};
+
+  ThreadEvent() : Event {event_id} {}
 
   std::string reason;
   std::int64_t threadId;
@@ -1965,6 +1996,8 @@ void from_json(const json& j, OutputGroup& p) {
 struct OutputEvent : Event {
   static constexpr EventType event_id {EventType::output};
 
+  OutputEvent() : Event {event_id} {}
+
   std::optional<std::string> category;
   std::string output;
   std::optional<OutputGroup> group;
@@ -2003,6 +2036,8 @@ void from_json(const json& j, OutputEvent& p) {
 
 struct BreakpointEvent : Event {
   static constexpr EventType event_id {EventType::breakpoint};
+
+  BreakpointEvent() : Event {event_id} {}
 
   std::string reason;
   Breakpoint breakpoint;
@@ -2059,6 +2094,8 @@ void from_json(const json& j, ModuleReason& p) {
 struct ModuleEvent : Event {
   static constexpr EventType event_id {EventType::module};
 
+  ModuleEvent() : Event {event_id} {}
+
   ModuleReason reason;
   Module module;
 };
@@ -2081,6 +2118,8 @@ using LoadedSourceReason = ModuleReason;
 
 struct LoadedSourceEvent : Event {
   static constexpr EventType event_id {EventType::loadedSource};
+
+  LoadedSourceEvent() : Event {event_id} {}
 
   LoadedSourceReason reason;
   Source source;
@@ -2137,6 +2176,8 @@ void from_json(const json& j, StartMethod& p) {
 struct ProcessEvent : Event {
   static constexpr EventType event_id {EventType::process};
 
+  ProcessEvent() : Event {event_id} {}
+
   std::string name;
   std::optional<std::int64_t> systemProcessId;
   std::optional<bool> isLocalProcess;
@@ -2167,6 +2208,8 @@ void from_json(const json& j, ProcessEvent& p) {
 struct CapabilitiesEvent : Event {
   static constexpr EventType event_id {EventType::capabilities};
 
+  CapabilitiesEvent() : Event {event_id} {}
+
   Capabilities capabilities;
 };
 
@@ -2184,6 +2227,8 @@ void from_json(const json& j, CapabilitiesEvent& p) {
 
 struct ProgressStartEvent : Event {
   static constexpr EventType event_id {EventType::progressStart};
+
+  ProgressStartEvent() : Event {event_id} {}
 
   std::string progressId;
   std::string title;
@@ -2218,6 +2263,8 @@ void from_json(const json& j, ProgressStartEvent& p) {
 struct ProgressUpdateEvent : Event {
   static constexpr EventType event_id {EventType::progressUpdate};
 
+  ProgressUpdateEvent() : Event {event_id} {}
+
   std::string progressId;
   std::optional<std::string> message;
   std::optional<std::int64_t> percentage;
@@ -2242,6 +2289,8 @@ void from_json(const json& j, ProgressUpdateEvent& p) {
 struct ProgressEndEvent : Event {
   static constexpr EventType event_id {EventType::progressEnd};
 
+  ProgressEndEvent() : Event {event_id} {}
+
   std::string progressId;
   std::optional<std::string> message;
 };
@@ -2262,6 +2311,8 @@ void from_json(const json& j, ProgressEndEvent& p) {
 
 struct InvalidatedEvent : Event {
   static constexpr EventType event_id {EventType::invalidated};
+
+  InvalidatedEvent() : Event {event_id} {}
 
   std::optional<std::string> areas;
   std::optional<std::int64_t> threadId;
@@ -2286,6 +2337,8 @@ void from_json(const json& j, InvalidatedEvent& p) {
 
 struct MemoryEvent : Event {
   static constexpr EventType event_id {EventType::memory};
+
+  MemoryEvent() : Event {event_id} {}
 
   std::string memoryReference;
   std::int64_t offset;
@@ -2339,6 +2392,8 @@ void from_json(const json& j, RunInTerminalKind& p) {
 struct RunInTerminalRequest : Request {
   static constexpr CommandType command_id {CommandType::runInTerminal};
 
+  RunInTerminalRequest() : Request {command_id} {}
+
   std::optional<RunInTerminalKind> kind;
   std::optional<std::string> title;
   std::string cwd;
@@ -2369,6 +2424,8 @@ void from_json(const json& j, RunInTerminalRequest& p) {
 struct RunInTerminalResponse : Response {
   static constexpr CommandType command_id {CommandType::runInTerminal};
 
+  RunInTerminalResponse() : Response {command_id, true} {}
+
   std::optional<std::int64_t> processId;
   std::optional<std::int64_t> shellProcessId;
 };
@@ -2389,6 +2446,8 @@ void from_json(const json& j, RunInTerminalResponse& p) {
 
 struct InitializeRequest : Request {
   static constexpr CommandType command_id {CommandType::initialize};
+
+  InitializeRequest() : Request {command_id} {}
 
   std::optional<std::string> clientId;
   std::optional<std::string> clientName;
@@ -2450,6 +2509,8 @@ void from_json(const json& j, InitializeRequest& p) {
 struct InitializeResponse : Response {
   static constexpr CommandType command_id {CommandType::initialize};
 
+  InitializeResponse() : Response {command_id, true} {}
+
   std::optional<Capabilities> body;
 };
 
@@ -2465,6 +2526,8 @@ void from_json(const json& j, InitializeResponse& p) {
 
 struct ConfigurationDoneRequest : Request {
   static constexpr CommandType command_id {CommandType::configurationDone};
+
+  ConfigurationDoneRequest() : Request {command_id} {}
 };
 
 void to_json(json& j, const ConfigurationDoneRequest& p) {
@@ -2477,6 +2540,8 @@ void from_json(const json& j, ConfigurationDoneRequest& p) {
 
 struct ConfigurationDoneResponse : Response {
   static constexpr CommandType command_id {CommandType::configurationDone};
+
+  ConfigurationDoneResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const ConfigurationDoneResponse& p) {
@@ -2489,6 +2554,8 @@ void from_json(const json& j, ConfigurationDoneResponse& p) {
 
 struct LaunchRequest : Request {
   static constexpr CommandType command_id {CommandType::launch};
+
+  LaunchRequest() : Request {command_id} {}
 
   std::optional<bool> noDebug;
   std::optional<json> __restart;
@@ -2510,6 +2577,8 @@ void from_json(const json& j, LaunchRequest& p) {
 
 struct LaunchResponse : Response {
   static constexpr CommandType command_id {CommandType::launch};
+
+  LaunchResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const LaunchResponse& p) {
@@ -2522,6 +2591,8 @@ void from_json(const json& j, LaunchResponse& p) {
 
 struct AttachRequest : Request {
   static constexpr CommandType command_id {CommandType::attach};
+
+  AttachRequest() : Request {command_id} {}
 
   std::optional<json> __restart;
 };
@@ -2540,6 +2611,8 @@ void from_json(const json& j, AttachRequest& p) {
 
 struct AttachResponse : Response {
   static constexpr CommandType command_id {CommandType::attach};
+
+  AttachResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const AttachResponse& p) {
@@ -2552,6 +2625,8 @@ void from_json(const json& j, AttachResponse& p) {
 
 struct RestartRequest : Request {
   static constexpr CommandType command_id {CommandType::restart};
+
+  RestartRequest() : Request {command_id} {}
 
   std::optional<bool> noDebug;
   std::optional<json> __restart;
@@ -2576,6 +2651,8 @@ void from_json(const json& j, RestartRequest& p) {
 
 struct RestartResponse : Response {
   static constexpr CommandType command_id {CommandType::restart};
+
+  RestartResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const RestartResponse& p) {
@@ -2588,6 +2665,8 @@ void from_json(const json& j, RestartResponse& p) {
 
 struct DisconnectRequest : Request {
   static constexpr CommandType command_id {CommandType::disconnect};
+
+  DisconnectRequest() : Request {command_id} {}
 
   std::optional<bool> restart;
   std::optional<bool> terminateDebuggee;
@@ -2615,6 +2694,8 @@ void from_json(const json& j, DisconnectRequest& p) {
 
 struct DisconnectResponse : Response {
   static constexpr CommandType command_id {CommandType::disconnect};
+
+  DisconnectResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const DisconnectResponse& p) {
@@ -2627,6 +2708,8 @@ void from_json(const json& j, DisconnectResponse& p) {
 
 struct TerminateRequest : Request {
   static constexpr CommandType command_id {CommandType::terminate};
+
+  TerminateRequest() : Request {command_id} {}
 
   std::optional<bool> restart;
 };
@@ -2645,6 +2728,8 @@ void from_json(const json& j, TerminateRequest& p) {
 
 struct TerminateResponse : Response {
   static constexpr CommandType command_id {CommandType::terminate};
+
+  TerminateResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const TerminateResponse& p) {
@@ -2657,6 +2742,8 @@ void from_json(const json& j, TerminateResponse& p) {
 
 struct BreakpointLocationsRequest : Request {
   static constexpr CommandType command_id {CommandType::breakpointLocations};
+
+  BreakpointLocationsRequest() : Request {command_id} {}
 
   Source source;
   std::int64_t line;
@@ -2688,6 +2775,8 @@ void from_json(const json& j, BreakpointLocationsRequest& p) {
 struct BreakpointLocationsResponse : Response {
   static constexpr CommandType command_id {CommandType::breakpointLocations};
 
+  BreakpointLocationsResponse() : Response {command_id, true} {}
+
   std::vector<BreakpointLocation> breakpoints;
 };
 
@@ -2703,8 +2792,10 @@ void from_json(const json& j, BreakpointLocationsResponse& p) {
   body.at("breakpoints").get_to(p.breakpoints);
 }
 
-struct SetBreakPointsRequest : Request {
+struct SetBreakpointsRequest : Request {
   static constexpr CommandType command_id {CommandType::setBreakpoints};
+
+  SetBreakpointsRequest() : Request {command_id} {}
 
   Source source;
   std::optional<std::vector<SourceBreakpoint>> breakpoints;
@@ -2712,7 +2803,7 @@ struct SetBreakPointsRequest : Request {
   std::optional<bool> sourceModified;
 };
 
-void to_json(json& j, const SetBreakPointsRequest& p) {
+void to_json(json& j, const SetBreakpointsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["source"] = p.source;
@@ -2721,7 +2812,7 @@ void to_json(json& j, const SetBreakPointsRequest& p) {
   to_optJson(arguments, "sourceModified", p.sourceModified);
 }
 
-void from_json(const json& j, SetBreakPointsRequest& p) {
+void from_json(const json& j, SetBreakpointsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("source").get_to(p.source);
@@ -2730,19 +2821,21 @@ void from_json(const json& j, SetBreakPointsRequest& p) {
   from_optJson(arguments, "sourceModified", p.sourceModified);
 }
 
-struct SetBreakPointsResponse : Response {
+struct SetBreakpointsResponse : Response {
   static constexpr CommandType command_id {CommandType::setBreakpoints};
+
+  SetBreakpointsResponse() : Response {command_id, true} {}
 
   std::optional<std::vector<SourceBreakpoint>> breakpoints;
 };
 
-void to_json(json& j, const SetBreakPointsResponse& p) {
+void to_json(json& j, const SetBreakpointsResponse& p) {
   j = static_cast<Response>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "breakpoints", p.breakpoints);
 }
 
-void from_json(const json& j, SetBreakPointsResponse& p) {
+void from_json(const json& j, SetBreakpointsResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "breakpoints", p.breakpoints);
@@ -2750,6 +2843,8 @@ void from_json(const json& j, SetBreakPointsResponse& p) {
 
 struct SetFunctionBreakpointsRequest : Request {
   static constexpr CommandType command_id {CommandType::setFunctionBreakpoints};
+
+  SetFunctionBreakpointsRequest() : Request {command_id} {}
 
   std::vector<FunctionBreakpoint> breakpoints;
 };
@@ -2767,6 +2862,8 @@ void from_json(const json& j, SetFunctionBreakpointsRequest& p) {
 }
 
 struct SetFunctionBreakpointsBaseResponse : Response {
+  using Response::Response;
+
   std::vector<Breakpoint> breakpoints;
 };
 
@@ -2784,6 +2881,9 @@ void from_json(const json& j, SetFunctionBreakpointsBaseResponse& p) {
 
 struct SetFunctionBreakpointsResponse : SetFunctionBreakpointsBaseResponse {
   static constexpr CommandType command_id {CommandType::setFunctionBreakpoints};
+
+  SetFunctionBreakpointsResponse()
+      : SetFunctionBreakpointsBaseResponse {command_id, true} {}
 };
 
 void to_json(json& j, const SetFunctionBreakpointsResponse& p) {
@@ -2797,6 +2897,8 @@ void from_json(const json& j, SetFunctionBreakpointsResponse& p) {
 struct SetExceptionBreakpointsRequest : Request {
   static constexpr CommandType command_id {
       CommandType::setExceptionBreakpoints};
+
+  SetExceptionBreakpointsRequest() : Request {command_id} {}
 
   std::vector<std::string> filters;
   std::optional<std::vector<ExceptionFilterOptions>> filterOptions;
@@ -2823,6 +2925,8 @@ struct SetExceptionBreakpointsResponse : Response {
   static constexpr CommandType command_id {
       CommandType::setExceptionBreakpoints};
 
+  SetExceptionBreakpointsResponse() : Response {command_id, true} {}
+
   std::optional<std::vector<Breakpoint>> breakpoints;
 };
 
@@ -2840,6 +2944,8 @@ void from_json(const json& j, SetExceptionBreakpointsResponse& p) {
 
 struct DataBreakpointInfoRequest : Request {
   static constexpr CommandType command_id {CommandType::dataBreakpointInfo};
+
+  DataBreakpointInfoRequest() : Request {command_id} {}
 
   std::optional<std::int64_t> variablesReference;
   std::string name;
@@ -2861,6 +2967,8 @@ void from_json(const json& j, DataBreakpointInfoRequest& p) {
 
 struct DataBreakpointInfoResponse : Response {
   static constexpr CommandType command_id {CommandType::dataBreakpointInfo};
+
+  DataBreakpointInfoResponse() : Response {command_id, true} {}
 
   std::optional<std::string> dataId;
   std::string description;
@@ -2893,6 +3001,8 @@ void from_json(const json& j, DataBreakpointInfoResponse& p) {
 struct SetDataBreakpointsRequest : Request {
   static constexpr CommandType command_id {CommandType::setDataBreakpoints};
 
+  SetDataBreakpointsRequest() : Request {command_id} {}
+
   std::vector<DataBreakpoint> breakpoints;
 };
 
@@ -2910,6 +3020,9 @@ void from_json(const json& j, SetDataBreakpointsRequest& p) {
 
 struct SetDataBreakpointsResponse : SetFunctionBreakpointsBaseResponse {
   static constexpr CommandType command_id {CommandType::setDataBreakpoints};
+
+  SetDataBreakpointsResponse()
+      : SetFunctionBreakpointsBaseResponse {command_id, true} {}
 };
 
 void to_json(json& j, const SetDataBreakpointsResponse& p) {
@@ -2923,6 +3036,8 @@ void from_json(const json& j, SetDataBreakpointsResponse& p) {
 struct SetInstructionBreakpointsRequest : Request {
   static constexpr CommandType command_id {
       CommandType::setInstructionBreakpoints};
+
+  SetInstructionBreakpointsRequest() : Request {command_id} {}
 
   std::vector<InstructionBreakpoint> breakpoints;
 };
@@ -2942,6 +3057,9 @@ void from_json(const json& j, SetInstructionBreakpointsRequest& p) {
 struct SetInstructionBreakpointsResponse : SetFunctionBreakpointsBaseResponse {
   static constexpr CommandType command_id {
       CommandType::setInstructionBreakpoints};
+
+  SetInstructionBreakpointsResponse()
+      : SetFunctionBreakpointsBaseResponse {command_id, true} {}
 };
 
 void to_json(json& j, const SetInstructionBreakpointsResponse& p) {
@@ -2953,6 +3071,8 @@ void from_json(const json& j, SetInstructionBreakpointsResponse& p) {
 }
 
 struct ContinueBaseRequest : Request {
+  using Request::Request;
+
   std::int64_t threadId;
   std::optional<bool> singleThread;
 };
@@ -2973,6 +3093,8 @@ void from_json(const json& j, ContinueBaseRequest& p) {
 
 struct ContinueRequest : ContinueBaseRequest {
   static constexpr CommandType command_id {CommandType::continue_};
+
+  ContinueRequest() : ContinueBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const ContinueRequest& p) {
@@ -2985,6 +3107,8 @@ void from_json(const json& j, ContinueRequest& p) {
 
 struct ContinueResponse : Response {
   static constexpr CommandType command_id {CommandType::continue_};
+
+  ContinueResponse() : Response {command_id, true} {}
 
   std::optional<bool> allThreadsContinued;
 };
@@ -3002,6 +3126,8 @@ void from_json(const json& j, ContinueResponse& p) {
 }
 
 struct NextBaseRequest : Request {
+  using Request::Request;
+
   std::int64_t threadId;
   std::optional<bool> singleThread;
   std::optional<SteppingGranularity> granularity;
@@ -3025,6 +3151,8 @@ void from_json(const json& j, NextBaseRequest& p) {
 
 struct NextRequest : NextBaseRequest {
   static constexpr CommandType command_id {CommandType::next};
+
+  NextRequest() : NextBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const NextRequest& p) {
@@ -3037,6 +3165,8 @@ void from_json(const json& j, NextRequest& p) {
 
 struct NextResponse : Response {
   static constexpr CommandType command_id {CommandType::next};
+
+  NextResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const NextResponse& p) {
@@ -3049,6 +3179,8 @@ void from_json(const json& j, NextResponse& p) {
 
 struct StepInRequest : Request {
   static constexpr CommandType command_id {CommandType::stepIn};
+
+  StepInRequest() : Request {command_id} {}
 
   int64_t threadId;
   std::optional<bool> singleThread;
@@ -3076,6 +3208,8 @@ void from_json(const json& j, StepInRequest& p) {
 
 struct StepInResponse : Response {
   static constexpr CommandType command_id {CommandType::stepIn};
+
+  StepInResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const StepInResponse& p) {
@@ -3088,6 +3222,8 @@ void from_json(const json& j, StepInResponse& p) {
 
 struct StepOutRequest : NextBaseRequest {
   static constexpr CommandType command_id {CommandType::stepOut};
+
+  StepOutRequest() : NextBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const StepOutRequest& p) {
@@ -3100,6 +3236,8 @@ void from_json(const json& j, StepOutRequest& p) {
 
 struct StepOutResponse : Response {
   static constexpr CommandType command_id {CommandType::stepOut};
+
+  StepOutResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const StepOutResponse& p) {
@@ -3112,6 +3250,8 @@ void from_json(const json& j, StepOutResponse& p) {
 
 struct StepBackRequest : NextBaseRequest {
   static constexpr CommandType command_id {CommandType::stepBack};
+
+  StepBackRequest() : NextBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const StepBackRequest& p) {
@@ -3124,6 +3264,8 @@ void from_json(const json& j, StepBackRequest& p) {
 
 struct StepBackResponse : Response {
   static constexpr CommandType command_id {CommandType::stepBack};
+
+  StepBackResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const StepBackResponse& p) {
@@ -3136,6 +3278,8 @@ void from_json(const json& j, StepBackResponse& p) {
 
 struct ReverseContinueRequest : ContinueBaseRequest {
   static constexpr CommandType command_id {CommandType::reverseContinue};
+
+  ReverseContinueRequest() : ContinueBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const ReverseContinueRequest& p) {
@@ -3148,6 +3292,8 @@ void from_json(const json& j, ReverseContinueRequest& p) {
 
 struct ReverseContinueResponse : Response {
   static constexpr CommandType command_id {CommandType::reverseContinue};
+
+  ReverseContinueResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const ReverseContinueResponse& p) {
@@ -3176,6 +3322,8 @@ void from_json(const json& j, RestartFrameBaseRequest& p) {
 
 struct RestartFrameRequest : RestartFrameBaseRequest {
   static constexpr CommandType command_id {CommandType::restartFrame};
+
+  RestartFrameRequest() : RestartFrameBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const RestartFrameRequest& p) {
@@ -3188,6 +3336,8 @@ void from_json(const json& j, RestartFrameRequest& p) {
 
 struct RestartFrameResponse : Response {
   static constexpr CommandType command_id {CommandType::restartFrame};
+
+  RestartFrameResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const RestartFrameResponse& p) {
@@ -3198,40 +3348,46 @@ void from_json(const json& j, RestartFrameResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
-struct GoToRequest : Request {
+struct GotoRequest : Request {
   static constexpr CommandType command_id {CommandType::goto_};
+
+  GotoRequest() : Request {command_id} {}
 
   std::int64_t threadId;
   std::int64_t targetId;
 };
 
-void to_json(json& j, const GoToRequest& p) {
+void to_json(json& j, const GotoRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["threadId"] = p.threadId;
   arguments["targetId"] = p.targetId;
 }
 
-void from_json(const json& j, GoToRequest& p) {
+void from_json(const json& j, GotoRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("threadId").get_to(p.threadId);
   arguments.at("targetId").get_to(p.targetId);
 }
 
-struct GoToResponse : Response {
+struct GotoResponse : Response {
   static constexpr CommandType command_id {CommandType::goto_};
+
+  GotoResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const GoToResponse& p) {
+void to_json(json& j, const GotoResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, GoToResponse& p) {
+void from_json(const json& j, GotoResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
 struct PauseBaseRequest : Request {
+  using Request::Request;
+
   std::int64_t threadId;
 };
 
@@ -3249,6 +3405,8 @@ void from_json(const json& j, PauseBaseRequest& p) {
 
 struct PauseRequest : PauseBaseRequest {
   static constexpr CommandType command_id {CommandType::pause};
+
+  PauseRequest() : PauseBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const PauseRequest& p) {
@@ -3261,6 +3419,8 @@ void from_json(const json& j, PauseRequest& p) {
 
 struct PauseResponse : Response {
   static constexpr CommandType command_id {CommandType::pause};
+
+  PauseResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const PauseResponse& p) {
@@ -3273,6 +3433,8 @@ void from_json(const json& j, PauseResponse& p) {
 
 struct StackTraceRequest : Request {
   static constexpr CommandType command_id {CommandType::stackTrace};
+
+  StackTraceRequest() : Request {command_id} {}
 
   std::int64_t threadId;
   std::optional<std::int64_t> startFrame;
@@ -3302,6 +3464,8 @@ void from_json(const json& j, StackTraceRequest& p) {
 struct StackTraceResponse : Response {
   static constexpr CommandType command_id {CommandType::stackTrace};
 
+  StackTraceResponse() : Response {command_id, true} {}
+
   std::vector<StackFrame> stackFrames;
   std::optional<std::int64_t> totalFrames;
 };
@@ -3322,6 +3486,8 @@ void from_json(const json& j, StackTraceResponse& p) {
 
 struct ScopesRequest : RestartFrameBaseRequest {
   static constexpr CommandType command_id {CommandType::scopes};
+
+  ScopesRequest() : RestartFrameBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const ScopesRequest& p) {
@@ -3334,6 +3500,8 @@ void from_json(const json& j, ScopesRequest& p) {
 
 struct ScopesResponse : Response {
   static constexpr CommandType command_id {CommandType::scopes};
+
+  ScopesResponse() : Response {command_id, true} {}
 
   std::vector<Scope> scopes;
 };
@@ -3382,6 +3550,8 @@ void from_json(const json& j, VariablesFilter& p) {
 struct VariablesRequest : Request {
   static constexpr CommandType command_id {CommandType::variables};
 
+  VariablesRequest() : Request {command_id} {}
+
   std::int64_t variablesReference;
   std::optional<VariablesFilter> filter;
   std::optional<std::int64_t> start;
@@ -3412,6 +3582,8 @@ void from_json(const json& j, VariablesRequest& p) {
 struct VariablesResponse : Response {
   static constexpr CommandType command_id {CommandType::variables};
 
+  VariablesResponse() : Response {command_id, true} {}
+
   std::vector<Variable> variables;
 };
 
@@ -3429,6 +3601,8 @@ void from_json(const json& j, VariablesResponse& p) {
 
 struct SetVariableRequest : Request {
   static constexpr CommandType command_id {CommandType::setVariable};
+
+  SetVariableRequest() : Request {command_id} {}
 
   std::int64_t variablesReference;
   std::string name;
@@ -3456,6 +3630,8 @@ void from_json(const json& j, SetVariableRequest& p) {
 
 struct SetVariableResponse : Response {
   static constexpr CommandType command_id {CommandType::setVariable};
+
+  SetVariableResponse() : Response {command_id, true} {}
 
   std::string value;
   std::optional<std::string> type;
@@ -3487,6 +3663,8 @@ void from_json(const json& j, SetVariableResponse& p) {
 struct SourceRequest : Request {
   static constexpr CommandType command_id {CommandType::source};
 
+  SourceRequest() : Request {command_id} {}
+
   std::optional<Source> source;
   std::int64_t sourceReference;
 };
@@ -3508,6 +3686,8 @@ void from_json(const json& j, SourceRequest& p) {
 struct SourceResponse : Response {
   static constexpr CommandType command_id {CommandType::source};
 
+  SourceResponse() : Response {command_id, true} {}
+
   std::string content;
   std::optional<std::string> mimeType;
 };
@@ -3528,6 +3708,8 @@ void from_json(const json& j, SourceResponse& p) {
 
 struct ThreadsRequest : Request {
   static constexpr CommandType command_id {CommandType::threads};
+
+  ThreadsRequest() : Request {command_id} {}
 };
 
 void to_json(json& j, const ThreadsRequest& p) {
@@ -3540,6 +3722,8 @@ void from_json(const json& j, ThreadsRequest& p) {
 
 struct ThreadsResponse : Response {
   static constexpr CommandType command_id {CommandType::threads};
+
+  ThreadsResponse() : Response {command_id, true} {}
 
   std::vector<Thread> threads;
 };
@@ -3559,6 +3743,8 @@ void from_json(const json& j, ThreadsResponse& p) {
 struct TerminateThreadsRequest : Request {
   static constexpr CommandType command_id {CommandType::terminateThreads};
 
+  TerminateThreadsRequest() : Request {command_id} {}
+
   std::optional<std::vector<std::int64_t>> threadIds;
 };
 
@@ -3576,6 +3762,8 @@ void from_json(const json& j, TerminateThreadsRequest& p) {
 
 struct TerminateThreadsResponse : Response {
   static constexpr CommandType command_id {CommandType::terminateThreads};
+
+  TerminateThreadsResponse() : Response {command_id, true} {}
 };
 
 void to_json(json& j, const TerminateThreadsResponse& p) {
@@ -3588,6 +3776,8 @@ void from_json(const json& j, TerminateThreadsResponse& p) {
 
 struct ModulesRequest : Request {
   static constexpr CommandType command_id {CommandType::modules};
+
+  ModulesRequest() : Request {command_id} {}
 
   std::optional<std::int64_t> startModule;
   std::optional<std::int64_t> moduleCount;
@@ -3610,6 +3800,8 @@ void from_json(const json& j, ModulesRequest& p) {
 struct ModulesResponse : Response {
   static constexpr CommandType command_id {CommandType::modules};
 
+  ModulesResponse() : Response {command_id, true} {}
+
   std::vector<Module> modules;
   std::optional<std::int64_t> totalModules;
 };
@@ -3630,6 +3822,8 @@ void from_json(const json& j, ModulesResponse& p) {
 
 struct LoadedSourcesRequest : Request {
   static constexpr CommandType command_id {CommandType::loadedSources};
+
+  LoadedSourcesRequest() : Request {command_id} {}
 };
 
 void to_json(json& j, const LoadedSourcesRequest& p) {
@@ -3642,6 +3836,8 @@ void from_json(const json& j, LoadedSourcesRequest& p) {
 
 struct LoadedSourcesResponse : Response {
   static constexpr CommandType command_id {CommandType::loadedSources};
+
+  LoadedSourcesResponse() : Response {command_id, true} {}
 
   std::vector<Source> sources;
 };
@@ -3660,6 +3856,8 @@ void from_json(const json& j, LoadedSourcesResponse& p) {
 
 struct EvaluateRequest : Request {
   static constexpr CommandType command_id {CommandType::evaluate};
+
+  EvaluateRequest() : Request {command_id} {}
 
   std::string expression;
   std::optional<std::int64_t> frameId;
@@ -3687,6 +3885,8 @@ void from_json(const json& j, EvaluateRequest& p) {
 
 struct EvaluateResponse : Response {
   static constexpr CommandType command_id {CommandType::evaluate};
+
+  EvaluateResponse() : Response {command_id, true} {}
 
   std::string result;
   std::optional<std::string> type;
@@ -3724,6 +3924,8 @@ void from_json(const json& j, EvaluateResponse& p) {
 struct SetExpressionRequest : Request {
   static constexpr CommandType command_id {CommandType::setExpression};
 
+  SetExpressionRequest() : Request {command_id} {}
+
   std::string expression;
   std::string value;
   std::optional<std::int64_t> frameId;
@@ -3750,6 +3952,8 @@ void from_json(const json& j, SetExpressionRequest& p) {
 
 struct SetExpressionResponse : Response {
   static constexpr CommandType command_id {CommandType::setExpression};
+
+  SetExpressionResponse() : Response {command_id, true} {}
 
   std::string value;
   std::optional<std::string> type;
@@ -3784,6 +3988,8 @@ void from_json(const json& j, SetExpressionResponse& p) {
 struct StepInTargetsRequest : Request {
   static constexpr CommandType command_id {CommandType::stepInTargets};
 
+  StepInTargetsRequest() : Request {command_id} {}
+
   std::int64_t frameId;
 };
 
@@ -3802,6 +4008,8 @@ void from_json(const json& j, StepInTargetsRequest& p) {
 struct StepInTargetsResponse : Response {
   static constexpr CommandType command_id {CommandType::stepInTargets};
 
+  StepInTargetsResponse() : Response {command_id, true} {}
+
   std::vector<StepInTarget> targets;
 };
 
@@ -3819,6 +4027,8 @@ void from_json(const json& j, StepInTargetsResponse& p) {
 
 struct GotoTargetsRequest : Request {
   static constexpr CommandType command_id {CommandType::gotoTargets};
+
+  GotoTargetsRequest() : Request {command_id} {}
 
   Source source;
   std::int64_t line;
@@ -3844,6 +4054,8 @@ void from_json(const json& j, GotoTargetsRequest& p) {
 struct GotoTargetsResponse : Response {
   static constexpr CommandType command_id {CommandType::gotoTargets};
 
+  GotoTargetsResponse() : Response {command_id, true} {}
+
   std::vector<GotoTarget> targets;
 };
 
@@ -3861,6 +4073,8 @@ void from_json(const json& j, GotoTargetsResponse& p) {
 
 struct CompletionsRequest : Request {
   static constexpr CommandType command_id {CommandType::completions};
+
+  CompletionsRequest() : Request {command_id} {}
 
   std::optional<std::int64_t> frameId;
   std::string text;
@@ -3889,6 +4103,8 @@ void from_json(const json& j, CompletionsRequest& p) {
 struct CompletionsResponse : Response {
   static constexpr CommandType command_id {CommandType::completions};
 
+  CompletionsResponse() : Response {command_id, true} {}
+
   std::vector<CompletionItem> targets;
 };
 
@@ -3906,6 +4122,8 @@ void from_json(const json& j, CompletionsResponse& p) {
 
 struct ExceptionInfoRequest : PauseBaseRequest {
   static constexpr CommandType command_id {CommandType::exceptionInfo};
+
+  ExceptionInfoRequest() : PauseBaseRequest {command_id} {}
 };
 
 void to_json(json& j, const ExceptionInfoRequest& p) {
@@ -3918,6 +4136,8 @@ void from_json(const json& j, ExceptionInfoRequest& p) {
 
 struct ExceptionInfoResponse : Response {
   static constexpr CommandType command_id {CommandType::exceptionInfo};
+
+  ExceptionInfoResponse() : Response {command_id, true} {}
 
   std::string exceptionId;
   std::optional<std::string> description;
@@ -3946,6 +4166,8 @@ void from_json(const json& j, ExceptionInfoResponse& p) {
 struct ReadMemoryRequest : Request {
   static constexpr CommandType command_id {CommandType::readMemory};
 
+  ReadMemoryRequest() : Request {command_id} {}
+
   std::string memoryReference;
   std::optional<std::int64_t> offset;
   std::int64_t count;
@@ -3970,6 +4192,8 @@ void from_json(const json& j, ReadMemoryRequest& p) {
 struct ReadMemoryResponse : Response {
   static constexpr CommandType command_id {CommandType::readMemory};
 
+  ReadMemoryResponse() : Response {command_id, true} {}
+
   std::string address;
   std::optional<std::int64_t> unreadableBytes;
   std::optional<std::string> data;
@@ -3993,6 +4217,8 @@ void from_json(const json& j, ReadMemoryResponse& p) {
 
 struct WriteMemoryRequest : Request {
   static constexpr CommandType command_id {CommandType::writeMemory};
+
+  WriteMemoryRequest() : Request {command_id} {}
 
   std::string memoryReference;
   std::optional<std::int64_t> offset;
@@ -4021,6 +4247,8 @@ void from_json(const json& j, WriteMemoryRequest& p) {
 struct WriteMemoryResponse : Response {
   static constexpr CommandType command_id {CommandType::writeMemory};
 
+  WriteMemoryResponse() : Response {command_id, true} {}
+
   std::optional<std::int64_t> offset;
   std::optional<std::int64_t> bytesWritten;
 };
@@ -4041,6 +4269,8 @@ void from_json(const json& j, WriteMemoryResponse& p) {
 
 struct DisassembleRequest : Request {
   static constexpr CommandType command_id {CommandType::disassemble};
+
+  DisassembleRequest() : Request {command_id} {}
 
   std::string memoryReference;
   std::optional<std::int64_t> offset;
@@ -4071,6 +4301,8 @@ void from_json(const json& j, DisassembleRequest& p) {
 
 struct DisassembleResponse : Response {
   static constexpr CommandType command_id {CommandType::disassemble};
+
+  DisassembleResponse() : Response {command_id, true} {}
 
   std::vector<DisassembledInstruction> instructions;
 };
@@ -4114,7 +4346,7 @@ std::string serialize(const ProtocolMessage& pm) {
           return json(static_cast<const BreakpointLocationsRequest&>(req))
               .dump();
         case CommandType::setBreakpoints:
-          return json(static_cast<const SetBreakPointsRequest&>(req)).dump();
+          return json(static_cast<const SetBreakpointsRequest&>(req)).dump();
         case CommandType::setFunctionBreakpoints:
           return json(static_cast<const SetFunctionBreakpointsRequest&>(req))
               .dump();
@@ -4145,7 +4377,7 @@ std::string serialize(const ProtocolMessage& pm) {
         case CommandType::restartFrame:
           return json(static_cast<const RestartFrameRequest&>(req)).dump();
         case CommandType::goto_:
-          return json(static_cast<const GoToRequest&>(req)).dump();
+          return json(static_cast<const GotoRequest&>(req)).dump();
         case CommandType::pause:
           return json(static_cast<const PauseRequest&>(req)).dump();
         case CommandType::stackTrace:
@@ -4214,7 +4446,7 @@ std::string serialize(const ProtocolMessage& pm) {
           return json(static_cast<const BreakpointLocationsResponse&>(resp))
               .dump();
         case CommandType::setBreakpoints:
-          return json(static_cast<const SetBreakPointsResponse&>(resp)).dump();
+          return json(static_cast<const SetBreakpointsResponse&>(resp)).dump();
         case CommandType::setFunctionBreakpoints:
           return json(static_cast<const SetFunctionBreakpointsResponse&>(resp))
               .dump();
@@ -4246,7 +4478,7 @@ std::string serialize(const ProtocolMessage& pm) {
         case CommandType::restartFrame:
           return json(static_cast<const RestartFrameResponse&>(resp)).dump();
         case CommandType::goto_:
-          return json(static_cast<const GoToResponse&>(resp)).dump();
+          return json(static_cast<const GotoResponse&>(resp)).dump();
         case CommandType::pause:
           return json(static_cast<const PauseResponse&>(resp)).dump();
         case CommandType::stackTrace:
