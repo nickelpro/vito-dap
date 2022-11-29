@@ -2472,9 +2472,9 @@ struct InitializeRequest : Request {
 void to_json(json& j, const InitializeRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
-  to_optJson(arguments, "clientId", p.clientId);
+  to_optJson(arguments, "clientID", p.clientId);
   to_optJson(arguments, "clientName", p.clientName);
-  arguments["adapterId"] = p.adapterId;
+  arguments["adapterID"] = p.adapterId;
   to_optJson(arguments, "locale", p.locale);
   to_optJson(arguments, "lineStartAt1", p.lineStartAt1);
   to_optJson(arguments, "columnStartAt1", p.columnStartAt1);
@@ -2492,9 +2492,9 @@ void to_json(json& j, const InitializeRequest& p) {
 void from_json(const json& j, InitializeRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
-  from_optJson(arguments, "clientId", p.clientId);
+  from_optJson(arguments, "clientID", p.clientId);
   from_optJson(arguments, "clientName", p.clientName);
-  arguments.at("adapterId").get_to(p.adapterId);
+  arguments.at("adapterID").get_to(p.adapterId);
   from_optJson(arguments, "locale", p.locale);
   from_optJson(arguments, "lineStartAt1", p.lineStartAt1);
   from_optJson(arguments, "columnStartAt1", p.columnStartAt1);
