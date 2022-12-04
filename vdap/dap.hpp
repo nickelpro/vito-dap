@@ -2562,6 +2562,7 @@ struct LaunchRequest : Request {
 
   LaunchRequest() : Request {command_id} {}
 
+  json arguments;
   std::optional<bool> noDebug;
   std::optional<json> __restart;
 };
@@ -2569,6 +2570,7 @@ struct LaunchRequest : Request {
 void to_json(json& j, const LaunchRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
+  arguments = p.arguments;
   to_optJson(arguments, "noDebug", p.noDebug);
   to_optJson(arguments, "__restart", p.__restart);
 }
@@ -2576,6 +2578,9 @@ void to_json(json& j, const LaunchRequest& p) {
 void from_json(const json& j, LaunchRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
+  p.arguments = arguments;
+  p.arguments.erase("noDebug");
+  p.arguments.erase("__restart");
   from_optJson(arguments, "noDebug", p.noDebug);
   from_optJson(arguments, "__restart", p.__restart);
 }
@@ -2599,18 +2604,22 @@ struct AttachRequest : Request {
 
   AttachRequest() : Request {command_id} {}
 
+  json arguments;
   std::optional<json> __restart;
 };
 
 void to_json(json& j, const AttachRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
+  arguments = p.arguments;
   to_optJson(arguments, "__restart", p.__restart);
 }
 
 void from_json(const json& j, AttachRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
+  p.arguments = arguments;
+  p.arguments.erase("__restart");
   from_optJson(arguments, "__restart", p.__restart);
 }
 
