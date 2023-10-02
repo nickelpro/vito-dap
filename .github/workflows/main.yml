@@ -1,0 +1,48 @@
+name: build+tests
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Install Build Dependencies
+        run: |
+          pacman --noconfirm -Syu
+          pacman --noconfirm -S cmake ninja git curl zip unzip tar
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Configure
+        run: cmake . -B build -G Ninja -DBUILD_TESTS=True
+
+      - name: Build
+        run: cmake --build build --config Release
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure
+        run: cmake . -B build -DBUILD_TESTS=True
+
+      - name: Build
+        run: cmake --build build --config Release
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure
+        run: cmake . -B build -DCMAKE_CXX_COMPILER=g++-12 -DBUILD_TESTS=True
+
+      - name: Build
+        run: cmake --build build --config Release
