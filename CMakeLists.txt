@@ -1,11 +1,28 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.24)
 
-set(CMAKE_TOOLCHAIN_FILE
-  ${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
-  CACHE STRING "Vcpkg toolchain file"
-)
+if(NOT SKIP_VCPKG)
+  if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    include(FetchContent)
+    FetchContent_Declare(
+      vcpkg
+      GIT_REPOSITORY https://github.com/microsoft/vcpkg.git
+      GIT_TAG master
+      GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(vcpkg)
+    set(CMAKE_TOOLCHAIN_FILE
+      ${vcpkg_SOURCE_DIR}/scripts/buildsystems/vcpkg.cmake
+      CACHE FILEPATH "Vcpkg toolchain file"
+    )
+    set(VCPKG_ROOT_DIR ${vcpkg_SOURCE_DIR} CACHE PATH "Vcpkg Root Directory")
+  endif()
 
-project(vito-dap LANGUAGES CXX VERSION 0.0.8)
+  add_custom_target(UpdateVcpkgBaseline
+    ${VCPKG_ROOT_DIR}/vcpkg x-update-baseline
+  )
+endif()
+
+project(vito-dap VERSION 0.0.9)
 
 find_package(nlohmann_json CONFIG REQUIRED)
 
@@ -18,7 +35,7 @@ target_sources(vdap INTERFACE FILE_SET HEADERS FILES vdap/dap.hpp)
 target_compile_features(vdap INTERFACE cxx_std_20)
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/vdap.pc.in
   ${CMAKE_CURRENT_BINARY_DIR}/vdap.pc
 )
 install(
@@ -42,9 +59,14 @@ install(
   EXPORT vdapTarget
   FILE_SET HEADERS
 )
-install(EXPORT vdapTarget NAMESPACE vdap:: DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/vdap)
+install(
+  EXPORT vdapTarget
+  NAMESPACE vdap::
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/vdap
+)
 
 option(BUILD_TESTS "Builds test binaries and adds them to CTest" FALSE)
+
 if(BUILD_TESTS)
   add_executable(test test/test.cpp)
   target_link_libraries(test PRIVATE vdap)

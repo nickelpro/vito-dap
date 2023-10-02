@@ -58,17 +58,14 @@ namespace dap {
 
 using json = nlohmann::json;
 
-// Switch to string_view if:
-//   https://github.com/nlohmann/json/pull/2685
-// ever merges
 template <typename T>
-void to_optJson(json& j, const std::string& s, const std::optional<T>& p) {
+void to_optJson(json& j, std::string_view s, const std::optional<T>& p) {
   if(p)
     j[s] = *p;
 }
 
 template <typename T>
-void from_optJson(const json& j, const std::string& s, std::optional<T>& p) {
+void from_optJson(const json& j, std::string_view s, std::optional<T>& p) {
   if(auto it {j.find(s)}; it != j.end())
     p = it->get<T>();
 }
@@ -82,7 +79,7 @@ struct ExceptionBreakpointsFilter {
   std::optional<std::string> conditionDescription;
 };
 
-void to_json(json& j, const ExceptionBreakpointsFilter& p) {
+inline void to_json(json& j, const ExceptionBreakpointsFilter& p) {
   j["filter"] = p.filter;
   j["label"] = p.label;
   to_optJson(j, "description", p.description);
@@ -91,7 +88,7 @@ void to_json(json& j, const ExceptionBreakpointsFilter& p) {
   to_optJson(j, "conditionDescription", p.conditionDescription);
 }
 
-void from_json(const json& j, ExceptionBreakpointsFilter& p) {
+inline void from_json(const json& j, ExceptionBreakpointsFilter& p) {
   j.at("filter").get_to(p.filter);
   j.at("label").get_to(p.label);
   from_optJson(j, "description", p.description);
@@ -105,12 +102,12 @@ struct ExceptionFilterOptions {
   std::optional<std::string> condition;
 };
 
-void to_json(json& j, const ExceptionFilterOptions& p) {
+inline void to_json(json& j, const ExceptionFilterOptions& p) {
   j["filterId"] = p.filterId;
   to_optJson(j, "condition", p.condition);
 }
 
-void from_json(const json& j, ExceptionFilterOptions& p) {
+inline void from_json(const json& j, ExceptionFilterOptions& p) {
   j.at("filterId").get_to(p.filterId);
   from_optJson(j, "condition", p.condition);
 }
@@ -120,12 +117,12 @@ struct ExceptionPathSegment {
   std::vector<std::string> name;
 };
 
-void to_json(json& j, const ExceptionPathSegment& p) {
+inline void to_json(json& j, const ExceptionPathSegment& p) {
   j["name"] = p.name;
   to_optJson(j, "negate", p.negate);
 }
 
-void from_json(const json& j, ExceptionPathSegment& p) {
+inline void from_json(const json& j, ExceptionPathSegment& p) {
   j.at("name").get_to(p.name);
   from_optJson(j, "negate", p.negate);
 }
@@ -137,7 +134,7 @@ enum struct ExceptionBreakMode {
   userUnhandled,
 };
 
-void to_json(json& j, const ExceptionBreakMode& p) {
+inline void to_json(json& j, const ExceptionBreakMode& p) {
   switch(p) {
     case ExceptionBreakMode::never:
       j = "never";
@@ -156,7 +153,7 @@ void to_json(json& j, const ExceptionBreakMode& p) {
   };
 }
 
-void from_json(const json& j, ExceptionBreakMode& p) {
+inline void from_json(const json& j, ExceptionBreakMode& p) {
   std::string s {j.get<std::string>()};
   if(s == "never")
     p = ExceptionBreakMode::never;
@@ -176,12 +173,12 @@ struct ExceptionOptions {
   ExceptionBreakMode breakMode;
 };
 
-void to_json(json& j, const ExceptionOptions& p) {
+inline void to_json(json& j, const ExceptionOptions& p) {
   j["breakMode"] = p.breakMode;
   to_optJson(j, "path", p.path);
 }
 
-void from_json(const json& j, ExceptionOptions& p) {
+inline void from_json(const json& j, ExceptionOptions& p) {
   j.at("breakMode").get_to(p.breakMode);
   from_optJson(j, "path", p.path);
 }
@@ -195,7 +192,7 @@ struct ExceptionDetails {
   std::optional<std::vector<ExceptionDetails>> innerExceptions;
 };
 
-void to_json(json& j, const ExceptionDetails& p) {
+inline void to_json(json& j, const ExceptionDetails& p) {
   to_optJson(j, "message", p.message);
   to_optJson(j, "typeName", p.typeName);
   to_optJson(j, "fullTypeName", p.fullTypeName);
@@ -204,7 +201,7 @@ void to_json(json& j, const ExceptionDetails& p) {
   to_optJson(j, "innerExceptions", p.innerExceptions);
 }
 
-void from_json(const json& j, ExceptionDetails& p) {
+inline void from_json(const json& j, ExceptionDetails& p) {
   from_optJson(j, "message", p.message);
   from_optJson(j, "typeName", p.typeName);
   from_optJson(j, "fullTypeName", p.fullTypeName);
@@ -220,7 +217,7 @@ enum struct ColumnDescriptorType {
   unixTimestampUTC,
 };
 
-void to_json(json& j, const ColumnDescriptorType& p) {
+inline void to_json(json& j, const ColumnDescriptorType& p) {
   switch(p) {
     case ColumnDescriptorType::string:
       j = "string";
@@ -239,7 +236,7 @@ void to_json(json& j, const ColumnDescriptorType& p) {
   };
 }
 
-void from_json(const json& j, ColumnDescriptorType& p) {
+inline void from_json(const json& j, ColumnDescriptorType& p) {
   std::string s {j.get<std::string>()};
   if(s == "string")
     p = ColumnDescriptorType::string;
@@ -261,7 +258,7 @@ struct ColumnDescriptor {
   std::optional<std::int64_t> width;
 };
 
-void to_json(json& j, const ColumnDescriptor& p) {
+inline void to_json(json& j, const ColumnDescriptor& p) {
   j["attributeName"] = p.attributeName;
   j["label"] = p.label;
   to_optJson(j, "format", p.format);
@@ -269,7 +266,7 @@ void to_json(json& j, const ColumnDescriptor& p) {
   to_optJson(j, "width", p.width);
 }
 
-void from_json(const json& j, ColumnDescriptor& p) {
+inline void from_json(const json& j, ColumnDescriptor& p) {
   j.at("attributeName").get_to(p.attributeName);
   j.at("label").get_to(p.label);
   from_optJson(j, "format", p.format);
@@ -284,7 +281,7 @@ enum struct CheckSumAlgorithm {
   timestamp,
 };
 
-void to_json(json& j, const CheckSumAlgorithm& p) {
+inline void to_json(json& j, const CheckSumAlgorithm& p) {
   switch(p) {
     case CheckSumAlgorithm::MD5:
       j = "MD5";
@@ -303,7 +300,7 @@ void to_json(json& j, const CheckSumAlgorithm& p) {
   };
 }
 
-void from_json(const json& j, CheckSumAlgorithm& p) {
+inline void from_json(const json& j, CheckSumAlgorithm& p) {
   std::string s {j.get<std::string>()};
   if(s == "MD5")
     p = CheckSumAlgorithm::MD5;
@@ -322,12 +319,12 @@ struct Checksum {
   std::string checksum;
 };
 
-void to_json(json& j, const Checksum& p) {
+inline void to_json(json& j, const Checksum& p) {
   j["algorithm"] = p.algorithm;
   j["checksum"] = p.checksum;
 }
 
-void from_json(const json& j, Checksum& p) {
+inline void from_json(const json& j, Checksum& p) {
   j.at("algorithm").get_to(p.algorithm);
   j.at("checksum").get_to(p.checksum);
 }
@@ -374,7 +371,7 @@ struct Capabilities {
   std::optional<bool> supportsSingleThreadExecutionRequests;
 };
 
-void to_json(json& j, const Capabilities& p) {
+inline void to_json(json& j, const Capabilities& p) {
   to_optJson(j, "supportsConfigurationDoneRequest",
       p.supportsConfigurationDoneRequest);
   to_optJson(j, "supportsFunctionBreakpoints", p.supportsFunctionBreakpoints);
@@ -424,7 +421,7 @@ void to_json(json& j, const Capabilities& p) {
       p.supportsSingleThreadExecutionRequests);
 }
 
-void from_json(const json& j, Capabilities& p) {
+inline void from_json(const json& j, Capabilities& p) {
   from_optJson(j, "supportsConfigurationDoneRequest",
       p.supportsConfigurationDoneRequest);
   from_optJson(j, "supportsFunctionBreakpoints", p.supportsFunctionBreakpoints);
@@ -483,7 +480,7 @@ enum struct SourcePresentationHint {
   deemphasize,
 };
 
-void to_json(json& j, const SourcePresentationHint& p) {
+inline void to_json(json& j, const SourcePresentationHint& p) {
   switch(p) {
     case SourcePresentationHint::normal:
       j = "normal";
@@ -499,7 +496,7 @@ void to_json(json& j, const SourcePresentationHint& p) {
   };
 }
 
-void from_json(const json& j, SourcePresentationHint& p) {
+inline void from_json(const json& j, SourcePresentationHint& p) {
   std::string s {j.get<std::string>()};
   if(s == "normal")
     p = SourcePresentationHint::normal;
@@ -522,7 +519,7 @@ struct Source {
   std::optional<std::vector<Checksum>> checksums;
 };
 
-void to_json(json& j, const Source& p) {
+inline void to_json(json& j, const Source& p) {
   to_optJson(j, "name", p.name);
   to_optJson(j, "path", p.path);
   to_optJson(j, "sourceReference", p.sourceReference);
@@ -533,7 +530,7 @@ void to_json(json& j, const Source& p) {
   to_optJson(j, "checksums", p.checksums);
 }
 
-void from_json(const json& j, Source& p) {
+inline void from_json(const json& j, Source& p) {
   from_optJson(j, "name", p.name);
   from_optJson(j, "path", p.path);
   from_optJson(j, "sourceReference", p.sourceReference);
@@ -552,7 +549,7 @@ struct SourceBreakpoint {
   std::optional<std::string> logMessage;
 };
 
-void to_json(json& j, const SourceBreakpoint& p) {
+inline void to_json(json& j, const SourceBreakpoint& p) {
   j["line"] = p.line;
   to_optJson(j, "number", p.number);
   to_optJson(j, "condition", p.condition);
@@ -560,7 +557,7 @@ void to_json(json& j, const SourceBreakpoint& p) {
   to_optJson(j, "logMessage", p.logMessage);
 }
 
-void from_json(const json& j, SourceBreakpoint& p) {
+inline void from_json(const json& j, SourceBreakpoint& p) {
   j.at("line").get_to(p.line);
   from_optJson(j, "number", p.number);
   from_optJson(j, "condition", p.condition);
@@ -575,14 +572,14 @@ struct InstructionBreakpoint {
   std::optional<std::string> hitCondition;
 };
 
-void to_json(json& j, const InstructionBreakpoint& p) {
+inline void to_json(json& j, const InstructionBreakpoint& p) {
   j["instructionReference"] = p.instructionReference;
   to_optJson(j, "offset", p.offset);
   to_optJson(j, "condition", p.condition);
   to_optJson(j, "hitCondition", p.hitCondition);
 }
 
-void from_json(const json& j, InstructionBreakpoint& p) {
+inline void from_json(const json& j, InstructionBreakpoint& p) {
   j.at("instructionReference").get_to(p.instructionReference);
   from_optJson(j, "offset", p.offset);
   from_optJson(j, "condition", p.condition);
@@ -595,7 +592,7 @@ enum struct DataBreakpointAccessType {
   readWrite,
 };
 
-void to_json(json& j, const DataBreakpointAccessType& p) {
+inline void to_json(json& j, const DataBreakpointAccessType& p) {
   switch(p) {
     case DataBreakpointAccessType::read:
       j = "read";
@@ -611,7 +608,7 @@ void to_json(json& j, const DataBreakpointAccessType& p) {
   };
 }
 
-void from_json(const json& j, DataBreakpointAccessType& p) {
+inline void from_json(const json& j, DataBreakpointAccessType& p) {
   std::string s {j.get<std::string>()};
   if(s == "read")
     p = DataBreakpointAccessType::read;
@@ -630,14 +627,14 @@ struct DataBreakpoint {
   std::optional<std::string> hitCondition;
 };
 
-void to_json(json& j, const DataBreakpoint& p) {
+inline void to_json(json& j, const DataBreakpoint& p) {
   j["dataId"] = p.dataId;
   to_optJson(j, "accessType", p.accessType);
   to_optJson(j, "condition", p.condition);
   to_optJson(j, "hitCondition", p.hitCondition);
 }
 
-void from_json(const json& j, DataBreakpoint& p) {
+inline void from_json(const json& j, DataBreakpoint& p) {
   j.at("dataId").get_to(p.dataId);
   from_optJson(j, "accessType", p.accessType);
   from_optJson(j, "condition", p.condition);
@@ -650,13 +647,13 @@ struct FunctionBreakpoint {
   std::optional<std::string> hitCondition;
 };
 
-void to_json(json& j, const FunctionBreakpoint& p) {
+inline void to_json(json& j, const FunctionBreakpoint& p) {
   j["name"] = p.name;
   to_optJson(j, "condition", p.condition);
   to_optJson(j, "hitCondition", p.hitCondition);
 }
 
-void from_json(const json& j, FunctionBreakpoint& p) {
+inline void from_json(const json& j, FunctionBreakpoint& p) {
   j.at("name").get_to(p.name);
   from_optJson(j, "condition", p.condition);
   from_optJson(j, "hitCondition", p.hitCondition);
@@ -675,7 +672,7 @@ struct Breakpoint {
   std::optional<std::int64_t> number;
 };
 
-void to_json(json& j, const Breakpoint& p) {
+inline void to_json(json& j, const Breakpoint& p) {
   j["verified"] = p.verified;
   to_optJson(j, "id", p.id);
   to_optJson(j, "message", p.message);
@@ -688,7 +685,7 @@ void to_json(json& j, const Breakpoint& p) {
   to_optJson(j, "number", p.number);
 }
 
-void from_json(const json& j, Breakpoint& p) {
+inline void from_json(const json& j, Breakpoint& p) {
   j.at("verified").get_to(p.verified);
   from_optJson(j, "id", p.id);
   from_optJson(j, "message", p.message);
@@ -708,14 +705,14 @@ struct BreakpointLocation {
   std::optional<std::int64_t> endColumn;
 };
 
-void to_json(json& j, const BreakpointLocation& p) {
+inline void to_json(json& j, const BreakpointLocation& p) {
   j["line"] = p.line;
   to_optJson(j, "column", p.column);
   to_optJson(j, "endLine", p.endLine);
   to_optJson(j, "endColumn", p.endColumn);
 }
 
-void from_json(const json& j, BreakpointLocation& p) {
+inline void from_json(const json& j, BreakpointLocation& p) {
   j.at("line").get_to(p.line);
   from_optJson(j, "column", p.column);
   from_optJson(j, "endLine", p.endLine);
@@ -728,7 +725,7 @@ enum struct SteppingGranularity {
   instruction,
 };
 
-void to_json(json& j, const SteppingGranularity& p) {
+inline void to_json(json& j, const SteppingGranularity& p) {
   switch(p) {
     case SteppingGranularity::statement:
       j = "statement";
@@ -744,7 +741,7 @@ void to_json(json& j, const SteppingGranularity& p) {
   };
 }
 
-void from_json(const json& j, SteppingGranularity& p) {
+inline void from_json(const json& j, SteppingGranularity& p) {
   std::string s {j.get<std::string>()};
   if(s == "statement")
     p = SteppingGranularity::statement;
@@ -769,7 +766,7 @@ struct Module {
   std::optional<std::string> addressRange;
 };
 
-void to_json(json& j, const Module& p) {
+inline void to_json(json& j, const Module& p) {
   j["id"] = p.id;
   j["name"] = p.name;
   to_optJson(j, "path", p.path);
@@ -782,7 +779,7 @@ void to_json(json& j, const Module& p) {
   to_optJson(j, "addressRange", p.addressRange);
 }
 
-void from_json(const json& j, Module& p) {
+inline void from_json(const json& j, Module& p) {
   j.at("id").get_to(p.id);
   j.at("name").get_to(p.name);
   from_optJson(j, "path", p.path);
@@ -805,7 +802,7 @@ struct StackFrameFormat {
   std::optional<bool> includeAll;
 };
 
-void to_json(json& j, const StackFrameFormat& p) {
+inline void to_json(json& j, const StackFrameFormat& p) {
   to_optJson(j, "parameters", p.parameters);
   to_optJson(j, "parameterTypes", p.parameterTypes);
   to_optJson(j, "parameterNames", p.parameterNames);
@@ -815,7 +812,7 @@ void to_json(json& j, const StackFrameFormat& p) {
   to_optJson(j, "includeAll", p.includeAll);
 }
 
-void from_json(const json& j, StackFrameFormat& p) {
+inline void from_json(const json& j, StackFrameFormat& p) {
   from_optJson(j, "parameters", p.parameters);
   from_optJson(j, "parameterTypes", p.parameterTypes);
   from_optJson(j, "parameterNames", p.parameterNames);
@@ -831,7 +828,7 @@ enum struct StackFramePresentationHint {
   subtle,
 };
 
-void to_json(json& j, const StackFramePresentationHint& p) {
+inline void to_json(json& j, const StackFramePresentationHint& p) {
   switch(p) {
     case StackFramePresentationHint::normal:
       j = "normal";
@@ -847,7 +844,7 @@ void to_json(json& j, const StackFramePresentationHint& p) {
   };
 }
 
-void from_json(const json& j, StackFramePresentationHint& p) {
+inline void from_json(const json& j, StackFramePresentationHint& p) {
   std::string s {j.get<std::string>()};
   if(s == "normal")
     p = StackFramePresentationHint::normal;
@@ -873,7 +870,7 @@ struct StackFrame {
   std::optional<StackFramePresentationHint> presentationHint;
 };
 
-void to_json(json& j, const StackFrame& p) {
+inline void to_json(json& j, const StackFrame& p) {
   j["id"] = p.id;
   j["name"] = p.name;
   j["source"] = p.source;
@@ -887,7 +884,7 @@ void to_json(json& j, const StackFrame& p) {
   to_optJson(j, "presentationHint", p.presentationHint);
 }
 
-void from_json(const json& j, StackFrame& p) {
+inline void from_json(const json& j, StackFrame& p) {
   j.at("id").get_to(p.id);
   j.at("name").get_to(p.name);
   j.at("source").get_to(p.source);
@@ -915,7 +912,7 @@ struct Scope {
   std::optional<std::int64_t> endColumn;
 };
 
-void to_json(json& j, const Scope& p) {
+inline void to_json(json& j, const Scope& p) {
   j["name"] = p.name;
   j["presentationHint"] = p.presentationHint;
   j["variablesReference"] = p.variablesReference;
@@ -929,7 +926,7 @@ void to_json(json& j, const Scope& p) {
   to_optJson(j, "endColumn", p.endColumn);
 }
 
-void from_json(const json& j, Scope& p) {
+inline void from_json(const json& j, Scope& p) {
   j.at("name").get_to(p.name);
   j.at("presentationHint").get_to(p.presentationHint);
   j.at("variablesReference").get_to(p.variablesReference);
@@ -947,11 +944,11 @@ struct ValueFormat {
   std::optional<bool> hex;
 };
 
-void to_json(json& j, const ValueFormat& p) {
+inline void to_json(json& j, const ValueFormat& p) {
   to_optJson(j, "hex", p.hex);
 }
 
-void from_json(const json& j, ValueFormat& p) {
+inline void from_json(const json& j, ValueFormat& p) {
   from_optJson(j, "hex", p.hex);
 }
 
@@ -962,14 +959,14 @@ struct VariablePresentationHint {
   std::optional<bool> lazy;
 };
 
-void to_json(json& j, const VariablePresentationHint& p) {
+inline void to_json(json& j, const VariablePresentationHint& p) {
   j["kind"] = p.kind;
   to_optJson(j, "attributes", p.attributes);
   to_optJson(j, "visibility", p.visibility);
   to_optJson(j, "lazy", p.lazy);
 }
 
-void from_json(const json& j, VariablePresentationHint& p) {
+inline void from_json(const json& j, VariablePresentationHint& p) {
   j.at("kind").get_to(p.kind);
   from_optJson(j, "attributes", p.attributes);
   from_optJson(j, "visibility", p.visibility);
@@ -988,7 +985,7 @@ struct Variable {
   std::optional<std::string> memoryReference;
 };
 
-void to_json(json& j, const Variable& p) {
+inline void to_json(json& j, const Variable& p) {
   j["name"] = p.name;
   j["value"] = p.value;
   to_optJson(j, "type", p.type);
@@ -1000,7 +997,7 @@ void to_json(json& j, const Variable& p) {
   to_optJson(j, "memoryReference", p.memoryReference);
 }
 
-void from_json(const json& j, Variable& p) {
+inline void from_json(const json& j, Variable& p) {
   j.at("name").get_to(p.name);
   j.at("value").get_to(p.value);
   from_optJson(j, "type", p.type);
@@ -1017,12 +1014,12 @@ struct Thread {
   std::string name;
 };
 
-void to_json(json& j, const Thread& p) {
+inline void to_json(json& j, const Thread& p) {
   j["id"] = p.id;
   j["name"] = p.name;
 }
 
-void from_json(const json& j, Thread& p) {
+inline void from_json(const json& j, Thread& p) {
   j.at("id").get_to(p.id);
   j.at("name").get_to(p.name);
 }
@@ -1032,12 +1029,12 @@ struct StepInTarget {
   std::string label;
 };
 
-void to_json(json& j, const StepInTarget& p) {
+inline void to_json(json& j, const StepInTarget& p) {
   j["id"] = p.id;
   j["label"] = p.label;
 }
 
-void from_json(const json& j, StepInTarget& p) {
+inline void from_json(const json& j, StepInTarget& p) {
   j.at("id").get_to(p.id);
   j.at("label").get_to(p.label);
 }
@@ -1052,7 +1049,7 @@ struct GotoTarget {
   std::optional<std::string> instructionPointerReference;
 };
 
-void to_json(json& j, const GotoTarget& p) {
+inline void to_json(json& j, const GotoTarget& p) {
   j["id"] = p.id;
   j["label"] = p.label;
   j["line"] = p.line;
@@ -1062,7 +1059,7 @@ void to_json(json& j, const GotoTarget& p) {
   to_optJson(j, "instructionPointerReference", p.instructionPointerReference);
 }
 
-void from_json(const json& j, GotoTarget& p) {
+inline void from_json(const json& j, GotoTarget& p) {
   j.at("id").get_to(p.id);
   j.at("label").get_to(p.label);
   j.at("line").get_to(p.line);
@@ -1094,7 +1091,7 @@ enum struct CompletionItemType {
   customColor,
 };
 
-void to_json(json& j, const CompletionItemType& p) {
+inline void to_json(json& j, const CompletionItemType& p) {
   switch(p) {
     case CompletionItemType::method:
       j = "method";
@@ -1158,7 +1155,7 @@ void to_json(json& j, const CompletionItemType& p) {
   };
 }
 
-void from_json(const json& j, CompletionItemType& p) {
+inline void from_json(const json& j, CompletionItemType& p) {
   std::string s {j.get<std::string>()};
   if(j == "method")
     p = CompletionItemType::method;
@@ -1214,7 +1211,7 @@ struct CompletionItem {
   std::optional<std::int64_t> selectionLength;
 };
 
-void to_json(json& j, const CompletionItem& p) {
+inline void to_json(json& j, const CompletionItem& p) {
   j["label"] = p.label;
   to_optJson(j, "text", p.text);
   to_optJson(j, "sortText", p.sortText);
@@ -1226,7 +1223,7 @@ void to_json(json& j, const CompletionItem& p) {
   to_optJson(j, "selectionLength", p.selectionLength);
 }
 
-void from_json(const json& j, CompletionItem& p) {
+inline void from_json(const json& j, CompletionItem& p) {
   j.at("label").get_to(p.label);
   from_optJson(j, "text", p.text);
   from_optJson(j, "sortText", p.sortText);
@@ -1250,7 +1247,7 @@ struct DisassembledInstruction {
   std::optional<std::int64_t> endColumn;
 };
 
-void to_json(json& j, const DisassembledInstruction& p) {
+inline void to_json(json& j, const DisassembledInstruction& p) {
   j["address"] = p.address;
   to_optJson(j, "instructionBytes", p.instructionBytes);
   j["instruction"] = p.instruction;
@@ -1262,7 +1259,7 @@ void to_json(json& j, const DisassembledInstruction& p) {
   to_optJson(j, "endColumn", p.endColumn);
 }
 
-void from_json(const json& j, DisassembledInstruction& p) {
+inline void from_json(const json& j, DisassembledInstruction& p) {
   j.at("address").get_to(p.address);
   from_optJson(j, "instructionBytes", p.instructionBytes);
   j.at("instruction").get_to(p.instruction);
@@ -1280,7 +1277,7 @@ enum struct MessageType {
   event,
 };
 
-void to_json(json& j, const MessageType& p) {
+inline void to_json(json& j, const MessageType& p) {
   switch(p) {
     case MessageType::request:
       j = "request";
@@ -1296,7 +1293,7 @@ void to_json(json& j, const MessageType& p) {
   };
 }
 
-void from_json(const json& j, MessageType& p) {
+inline void from_json(const json& j, MessageType& p) {
   std::string s {j.get<std::string>()};
   if(s == "request")
     p = MessageType::request;
@@ -1317,12 +1314,12 @@ struct ProtocolMessage {
   MessageType type;
 };
 
-void to_json(json& j, const ProtocolMessage& p) {
+inline void to_json(json& j, const ProtocolMessage& p) {
   j["seq"] = p.seq;
   j["type"] = p.type;
 }
 
-void from_json(const json& j, ProtocolMessage& p) {
+inline void from_json(const json& j, ProtocolMessage& p) {
   j.at("seq").get_to(p.seq);
   j.at("type").get_to(p.type);
 }
@@ -1374,7 +1371,7 @@ enum struct CommandType {
   COMMAND_MAX,
 };
 
-void to_json(json& j, const CommandType& p) {
+inline void to_json(json& j, const CommandType& p) {
   switch(p) {
     case CommandType::cancel:
       j = "cancel";
@@ -1498,7 +1495,7 @@ void to_json(json& j, const CommandType& p) {
   };
 }
 
-void from_json(const json& j, CommandType& p) {
+inline void from_json(const json& j, CommandType& p) {
   std::string s {j.get<std::string>()};
   if(j == "cancel")
     p = CommandType::cancel;
@@ -1590,12 +1587,12 @@ struct Request : ProtocolMessage {
   CommandType command;
 };
 
-void to_json(json& j, const Request& p) {
+inline void to_json(json& j, const Request& p) {
   j = static_cast<ProtocolMessage>(p);
   j["command"] = p.command;
 }
 
-void from_json(const json& j, Request& p) {
+inline void from_json(const json& j, Request& p) {
   j.get_to(static_cast<ProtocolMessage&>(p));
   j.at("command").get_to(p.command);
 }
@@ -1621,7 +1618,7 @@ enum struct EventType {
   EVENT_MAX,
 };
 
-void to_json(json& j, const EventType& p) {
+inline void to_json(json& j, const EventType& p) {
   switch(p) {
     case EventType::initialized:
       j = "initialized";
@@ -1679,7 +1676,7 @@ void to_json(json& j, const EventType& p) {
   };
 }
 
-void from_json(const json& j, EventType& p) {
+inline void from_json(const json& j, EventType& p) {
   std::string s {j.get<std::string>()};
   if(j == "initialized")
     p = EventType::initialized;
@@ -1727,12 +1724,12 @@ struct Event : ProtocolMessage {
   EventType event;
 };
 
-void to_json(json& j, const Event& p) {
+inline void to_json(json& j, const Event& p) {
   j = static_cast<ProtocolMessage>(p);
   j["event"] = p.event;
 }
 
-void from_json(const json& j, Event& p) {
+inline void from_json(const json& j, Event& p) {
   j.get_to(static_cast<ProtocolMessage&>(p));
   j.at("event").get_to(p.event);
 }
@@ -1749,7 +1746,7 @@ struct Response : ProtocolMessage {
   std::optional<std::string> message;
 };
 
-void to_json(json& j, const Response& p) {
+inline void to_json(json& j, const Response& p) {
   j = static_cast<ProtocolMessage>(p);
   j["request_seq"] = p.request_seq;
   j["success"] = p.success;
@@ -1757,7 +1754,7 @@ void to_json(json& j, const Response& p) {
   to_optJson(j, "message", p.message);
 }
 
-void from_json(const json& j, Response& p) {
+inline void from_json(const json& j, Response& p) {
   j.get_to(static_cast<ProtocolMessage&>(p));
   j.at("request_seq").get_to(p.request_seq);
   j.at("success").get_to(p.success);
@@ -1772,13 +1769,13 @@ struct ErrorResponse : Response {
   std::optional<std::string> error;
 };
 
-void to_json(json& j, const ErrorResponse& p) {
+inline void to_json(json& j, const ErrorResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   to_optJson(body, "error", p.error);
 }
 
-void from_json(const json& j, ErrorResponse& p) {
+inline void from_json(const json& j, ErrorResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   from_optJson(body, "error", p.error);
@@ -1794,7 +1791,7 @@ struct CancelRequest : Request {
   std::optional<std::string> progressId;
 };
 
-void to_json(json& j, const CancelRequest& p) {
+inline void to_json(json& j, const CancelRequest& p) {
   j = static_cast<Request>(p);
   if(p.progressId || p.progressId) {
     json& arguments {j["arguments"]};
@@ -1803,7 +1800,7 @@ void to_json(json& j, const CancelRequest& p) {
   }
 }
 
-void from_json(const json& j, CancelRequest& p) {
+inline void from_json(const json& j, CancelRequest& p) {
   j.get_to(static_cast<Request&>(p));
   if(auto it {j.find("arguments")}; it != j.end()) {
     from_optJson(*it, "requestId", p.requestId);
@@ -1817,11 +1814,11 @@ struct CancelResponse : Response {
   CancelResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const CancelResponse& p) {
+inline void to_json(json& j, const CancelResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, CancelResponse& p) {
+inline void from_json(const json& j, CancelResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -1831,11 +1828,11 @@ struct InitializedEvent : Event {
   InitializedEvent() : Event {event_id} {}
 };
 
-void to_json(json& j, const InitializedEvent& p) {
+inline void to_json(json& j, const InitializedEvent& p) {
   j = static_cast<Event>(p);
 }
 
-void from_json(const json& j, InitializedEvent& p) {
+inline void from_json(const json& j, InitializedEvent& p) {
   j.get_to(static_cast<Event&>(p));
 }
 
@@ -1853,7 +1850,7 @@ struct StoppedEvent : Event {
   std::optional<std::vector<std::int64_t>> hitBreakpointIds;
 };
 
-void to_json(json& j, const StoppedEvent& p) {
+inline void to_json(json& j, const StoppedEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["reason"] = p.reason;
@@ -1865,7 +1862,7 @@ void to_json(json& j, const StoppedEvent& p) {
   to_optJson(body, "hitBreakpointIds", p.hitBreakpointIds);
 }
 
-void from_json(const json& j, StoppedEvent& p) {
+inline void from_json(const json& j, StoppedEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("reason").get_to(p.reason);
@@ -1886,14 +1883,14 @@ struct ContinuedEvent : Event {
   std::optional<bool> allThreadsContinued;
 };
 
-void to_json(json& j, const ContinuedEvent& p) {
+inline void to_json(json& j, const ContinuedEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["threadId"] = p.threadId;
   to_optJson(body, "allThreadsContinued", p.allThreadsContinued);
 }
 
-void from_json(const json& j, ContinuedEvent& p) {
+inline void from_json(const json& j, ContinuedEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("threadId").get_to(p.threadId);
@@ -1908,13 +1905,13 @@ struct ExitedEvent : Event {
   std::int64_t exitCode;
 };
 
-void to_json(json& j, const ExitedEvent& p) {
+inline void to_json(json& j, const ExitedEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["exitCode"] = p.exitCode;
 }
 
-void from_json(const json& j, ExitedEvent& p) {
+inline void from_json(const json& j, ExitedEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("exitCode").get_to(p.exitCode);
@@ -1928,13 +1925,13 @@ struct TerminatedEvent : Event {
   std::optional<json> restart;
 };
 
-void to_json(json& j, const TerminatedEvent& p) {
+inline void to_json(json& j, const TerminatedEvent& p) {
   j = static_cast<Event>(p);
   if(p.restart)
     j["body"]["restart"] = *p.restart;
 }
 
-void from_json(const json& j, TerminatedEvent& p) {
+inline void from_json(const json& j, TerminatedEvent& p) {
   j.get_to(static_cast<Event&>(p));
   if(auto it {j.find("body")}; it != j.end())
     from_optJson(*it, "restart", p.restart);
@@ -1949,14 +1946,14 @@ struct ThreadEvent : Event {
   std::int64_t threadId;
 };
 
-void to_json(json& j, const ThreadEvent& p) {
+inline void to_json(json& j, const ThreadEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["reason"] = p.reason;
   body["threadId"] = p.threadId;
 }
 
-void from_json(const json& j, ThreadEvent& p) {
+inline void from_json(const json& j, ThreadEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("reason").get_to(p.reason);
@@ -1969,7 +1966,7 @@ enum struct OutputGroup {
   end,
 };
 
-void to_json(json& j, const OutputGroup& p) {
+inline void to_json(json& j, const OutputGroup& p) {
   switch(p) {
     case OutputGroup::start:
       j = "start";
@@ -1985,7 +1982,7 @@ void to_json(json& j, const OutputGroup& p) {
   };
 }
 
-void from_json(const json& j, OutputGroup& p) {
+inline void from_json(const json& j, OutputGroup& p) {
   std::string s {j.get<std::string>()};
   if(s == "start")
     p = OutputGroup::start;
@@ -2013,7 +2010,7 @@ struct OutputEvent : Event {
   std::optional<json> data;
 };
 
-void to_json(json& j, const OutputEvent& p) {
+inline void to_json(json& j, const OutputEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   to_optJson(body, "category", p.category);
@@ -2026,7 +2023,7 @@ void to_json(json& j, const OutputEvent& p) {
   to_optJson(body, "data", p.data);
 }
 
-void from_json(const json& j, OutputEvent& p) {
+inline void from_json(const json& j, OutputEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   from_optJson(body, "category", p.category);
@@ -2048,14 +2045,14 @@ struct BreakpointEvent : Event {
   Breakpoint breakpoint;
 };
 
-void to_json(json& j, const BreakpointEvent& p) {
+inline void to_json(json& j, const BreakpointEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["reason"] = p.reason;
   body["breakpoint"] = p.breakpoint;
 }
 
-void from_json(const json& j, BreakpointEvent& p) {
+inline void from_json(const json& j, BreakpointEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("reason").get_to(p.reason);
@@ -2068,7 +2065,7 @@ enum struct ModuleReason {
   removed,
 };
 
-void to_json(json& j, const ModuleReason& p) {
+inline void to_json(json& j, const ModuleReason& p) {
   switch(p) {
     case ModuleReason::new_:
       j = "new";
@@ -2084,7 +2081,7 @@ void to_json(json& j, const ModuleReason& p) {
   };
 }
 
-void from_json(const json& j, ModuleReason& p) {
+inline void from_json(const json& j, ModuleReason& p) {
   std::string s {j.get<std::string>()};
   if(s == "new")
     p = ModuleReason::new_;
@@ -2105,14 +2102,14 @@ struct ModuleEvent : Event {
   Module module;
 };
 
-void to_json(json& j, const ModuleEvent& p) {
+inline void to_json(json& j, const ModuleEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["reason"] = p.reason;
   body["module"] = p.module;
 }
 
-void from_json(const json& j, ModuleEvent& p) {
+inline void from_json(const json& j, ModuleEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("reason").get_to(p.reason);
@@ -2130,14 +2127,14 @@ struct LoadedSourceEvent : Event {
   Source source;
 };
 
-void to_json(json& j, const LoadedSourceEvent& p) {
+inline void to_json(json& j, const LoadedSourceEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["reason"] = p.reason;
   body["source"] = p.source;
 }
 
-void from_json(const json& j, LoadedSourceEvent& p) {
+inline void from_json(const json& j, LoadedSourceEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("reason").get_to(p.reason);
@@ -2150,7 +2147,7 @@ enum struct StartMethod {
   attachForSuspendedLaunch,
 };
 
-void to_json(json& j, const StartMethod& p) {
+inline void to_json(json& j, const StartMethod& p) {
   switch(p) {
     case StartMethod::launch:
       j = "launch";
@@ -2166,7 +2163,7 @@ void to_json(json& j, const StartMethod& p) {
   };
 }
 
-void from_json(const json& j, StartMethod& p) {
+inline void from_json(const json& j, StartMethod& p) {
   std::string s {j.get<std::string>()};
   if(s == "launch")
     p = StartMethod::launch;
@@ -2190,7 +2187,7 @@ struct ProcessEvent : Event {
   std::optional<std::int64_t> pointerSize;
 };
 
-void to_json(json& j, const ProcessEvent& p) {
+inline void to_json(json& j, const ProcessEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["name"] = p.name;
@@ -2200,7 +2197,7 @@ void to_json(json& j, const ProcessEvent& p) {
   to_optJson(body, "pointerSize", p.pointerSize);
 }
 
-void from_json(const json& j, ProcessEvent& p) {
+inline void from_json(const json& j, ProcessEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("name").get_to(p.name);
@@ -2218,13 +2215,13 @@ struct CapabilitiesEvent : Event {
   Capabilities capabilities;
 };
 
-void to_json(json& j, const CapabilitiesEvent& p) {
+inline void to_json(json& j, const CapabilitiesEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["capabilities"] = p.capabilities;
 }
 
-void from_json(const json& j, CapabilitiesEvent& p) {
+inline void from_json(const json& j, CapabilitiesEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("capabilities").get_to(p.capabilities);
@@ -2243,7 +2240,7 @@ struct ProgressStartEvent : Event {
   std::optional<std::int64_t> percentage;
 };
 
-void to_json(json& j, const ProgressStartEvent& p) {
+inline void to_json(json& j, const ProgressStartEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["progressId"] = p.progressId;
@@ -2254,7 +2251,7 @@ void to_json(json& j, const ProgressStartEvent& p) {
   to_optJson(body, "percentage", p.percentage);
 }
 
-void from_json(const json& j, ProgressStartEvent& p) {
+inline void from_json(const json& j, ProgressStartEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("progressId").get_to(p.progressId);
@@ -2275,7 +2272,7 @@ struct ProgressUpdateEvent : Event {
   std::optional<std::int64_t> percentage;
 };
 
-void to_json(json& j, const ProgressUpdateEvent& p) {
+inline void to_json(json& j, const ProgressUpdateEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["progressId"] = p.progressId;
@@ -2283,7 +2280,7 @@ void to_json(json& j, const ProgressUpdateEvent& p) {
   to_optJson(body, "percentage", p.percentage);
 }
 
-void from_json(const json& j, ProgressUpdateEvent& p) {
+inline void from_json(const json& j, ProgressUpdateEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("progressId").get_to(p.progressId);
@@ -2300,14 +2297,14 @@ struct ProgressEndEvent : Event {
   std::optional<std::string> message;
 };
 
-void to_json(json& j, const ProgressEndEvent& p) {
+inline void to_json(json& j, const ProgressEndEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["progressId"] = p.progressId;
   to_optJson(body, "message", p.message);
 }
 
-void from_json(const json& j, ProgressEndEvent& p) {
+inline void from_json(const json& j, ProgressEndEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("progressId").get_to(p.progressId);
@@ -2324,7 +2321,7 @@ struct InvalidatedEvent : Event {
   std::optional<std::int64_t> stackFrameId;
 };
 
-void to_json(json& j, const InvalidatedEvent& p) {
+inline void to_json(json& j, const InvalidatedEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   to_optJson(body, "areas", p.areas);
@@ -2332,7 +2329,7 @@ void to_json(json& j, const InvalidatedEvent& p) {
   to_optJson(body, "stackFrameId", p.stackFrameId);
 }
 
-void from_json(const json& j, InvalidatedEvent& p) {
+inline void from_json(const json& j, InvalidatedEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   from_optJson(body, "areas", p.areas);
@@ -2350,7 +2347,7 @@ struct MemoryEvent : Event {
   std::int64_t count;
 };
 
-void to_json(json& j, const MemoryEvent& p) {
+inline void to_json(json& j, const MemoryEvent& p) {
   j = static_cast<Event>(p);
   json& body {j["body"]};
   body["memoryReference"] = p.memoryReference;
@@ -2358,7 +2355,7 @@ void to_json(json& j, const MemoryEvent& p) {
   body["count"] = p.count;
 }
 
-void from_json(const json& j, MemoryEvent& p) {
+inline void from_json(const json& j, MemoryEvent& p) {
   j.get_to(static_cast<Event&>(p));
   const json& body {j.at("body")};
   body.at("memoryReference").get_to(p.memoryReference);
@@ -2371,7 +2368,7 @@ enum struct RunInTerminalKind {
   external,
 };
 
-void to_json(json& j, const RunInTerminalKind& p) {
+inline void to_json(json& j, const RunInTerminalKind& p) {
   switch(p) {
     case RunInTerminalKind::integrated:
       j = "integrated";
@@ -2384,7 +2381,7 @@ void to_json(json& j, const RunInTerminalKind& p) {
   };
 }
 
-void from_json(const json& j, RunInTerminalKind& p) {
+inline void from_json(const json& j, RunInTerminalKind& p) {
   std::string s {j.get<std::string>()};
   if(s == "integrated")
     p = RunInTerminalKind::integrated;
@@ -2406,7 +2403,7 @@ struct RunInTerminalRequest : Request {
   std::optional<std::map<std::string, std::optional<std::string>>> env;
 };
 
-void to_json(json& j, const RunInTerminalRequest& p) {
+inline void to_json(json& j, const RunInTerminalRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "kind", p.kind);
@@ -2416,7 +2413,7 @@ void to_json(json& j, const RunInTerminalRequest& p) {
   to_optJson(arguments, "env", p.env);
 }
 
-void from_json(const json& j, RunInTerminalRequest& p) {
+inline void from_json(const json& j, RunInTerminalRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "kind", p.kind);
@@ -2435,14 +2432,14 @@ struct RunInTerminalResponse : Response {
   std::optional<std::int64_t> shellProcessId;
 };
 
-void to_json(json& j, const RunInTerminalResponse& p) {
+inline void to_json(json& j, const RunInTerminalResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   to_optJson(body, "processId", p.processId);
   to_optJson(body, "shellProcessId", p.shellProcessId);
 }
 
-void from_json(const json& j, RunInTerminalResponse& p) {
+inline void from_json(const json& j, RunInTerminalResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   from_optJson(body, "processId", p.processId);
@@ -2469,7 +2466,7 @@ struct InitializeRequest : Request {
   std::optional<bool> supportsMemoryEvent;
 };
 
-void to_json(json& j, const InitializeRequest& p) {
+inline void to_json(json& j, const InitializeRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "clientID", p.clientId);
@@ -2489,7 +2486,7 @@ void to_json(json& j, const InitializeRequest& p) {
   to_optJson(arguments, "supportsMemoryEvent", p.supportsMemoryEvent);
 }
 
-void from_json(const json& j, InitializeRequest& p) {
+inline void from_json(const json& j, InitializeRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "clientID", p.clientId);
@@ -2519,12 +2516,12 @@ struct InitializeResponse : Response {
   std::optional<Capabilities> body;
 };
 
-void to_json(json& j, const InitializeResponse& p) {
+inline void to_json(json& j, const InitializeResponse& p) {
   j = static_cast<Response>(p);
   to_optJson(j, "body", p.body);
 }
 
-void from_json(const json& j, InitializeResponse& p) {
+inline void from_json(const json& j, InitializeResponse& p) {
   j.get_to(static_cast<Response&>(p));
   from_optJson(j, "body", p.body);
 }
@@ -2535,11 +2532,11 @@ struct ConfigurationDoneRequest : Request {
   ConfigurationDoneRequest() : Request {command_id} {}
 };
 
-void to_json(json& j, const ConfigurationDoneRequest& p) {
+inline void to_json(json& j, const ConfigurationDoneRequest& p) {
   j = static_cast<Request>(p);
 }
 
-void from_json(const json& j, ConfigurationDoneRequest& p) {
+inline void from_json(const json& j, ConfigurationDoneRequest& p) {
   j.get_to(static_cast<Request&>(p));
 }
 
@@ -2549,11 +2546,11 @@ struct ConfigurationDoneResponse : Response {
   ConfigurationDoneResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const ConfigurationDoneResponse& p) {
+inline void to_json(json& j, const ConfigurationDoneResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, ConfigurationDoneResponse& p) {
+inline void from_json(const json& j, ConfigurationDoneResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -2567,7 +2564,7 @@ struct LaunchRequest : Request {
   std::optional<json> __restart;
 };
 
-void to_json(json& j, const LaunchRequest& p) {
+inline void to_json(json& j, const LaunchRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments = p.arguments;
@@ -2575,7 +2572,7 @@ void to_json(json& j, const LaunchRequest& p) {
   to_optJson(arguments, "__restart", p.__restart);
 }
 
-void from_json(const json& j, LaunchRequest& p) {
+inline void from_json(const json& j, LaunchRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   p.arguments = arguments;
@@ -2591,11 +2588,11 @@ struct LaunchResponse : Response {
   LaunchResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const LaunchResponse& p) {
+inline void to_json(json& j, const LaunchResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, LaunchResponse& p) {
+inline void from_json(const json& j, LaunchResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -2608,14 +2605,14 @@ struct AttachRequest : Request {
   std::optional<json> __restart;
 };
 
-void to_json(json& j, const AttachRequest& p) {
+inline void to_json(json& j, const AttachRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments = p.arguments;
   to_optJson(arguments, "__restart", p.__restart);
 }
 
-void from_json(const json& j, AttachRequest& p) {
+inline void from_json(const json& j, AttachRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   p.arguments = arguments;
@@ -2629,11 +2626,11 @@ struct AttachResponse : Response {
   AttachResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const AttachResponse& p) {
+inline void to_json(json& j, const AttachResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, AttachResponse& p) {
+inline void from_json(const json& j, AttachResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -2646,7 +2643,7 @@ struct RestartRequest : Request {
   std::optional<json> __restart;
 };
 
-void to_json(json& j, const RestartRequest& p) {
+inline void to_json(json& j, const RestartRequest& p) {
   j = static_cast<Request>(p);
   if(p.noDebug || p.__restart) {
     json& arguments {j["arguments"]};
@@ -2655,7 +2652,7 @@ void to_json(json& j, const RestartRequest& p) {
   }
 }
 
-void from_json(const json& j, RestartRequest& p) {
+inline void from_json(const json& j, RestartRequest& p) {
   j.get_to(static_cast<Request&>(p));
   if(auto it {j.find("arguments")}; it != j.end()) {
     from_optJson(*it, "noDebug", p.noDebug);
@@ -2669,11 +2666,11 @@ struct RestartResponse : Response {
   RestartResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const RestartResponse& p) {
+inline void to_json(json& j, const RestartResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, RestartResponse& p) {
+inline void from_json(const json& j, RestartResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -2687,7 +2684,7 @@ struct DisconnectRequest : Request {
   std::optional<bool> suspendDebuggee;
 };
 
-void to_json(json& j, const DisconnectRequest& p) {
+inline void to_json(json& j, const DisconnectRequest& p) {
   j = static_cast<Request>(p);
   if(p.restart || p.terminateDebuggee || p.suspendDebuggee) {
     json& arguments {j["arguments"]};
@@ -2697,7 +2694,7 @@ void to_json(json& j, const DisconnectRequest& p) {
   }
 }
 
-void from_json(const json& j, DisconnectRequest& p) {
+inline void from_json(const json& j, DisconnectRequest& p) {
   j.get_to(static_cast<Request&>(p));
   if(auto it {j.find("arguments")}; it != j.end()) {
     from_optJson(*it, "restart", p.restart);
@@ -2712,11 +2709,11 @@ struct DisconnectResponse : Response {
   DisconnectResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const DisconnectResponse& p) {
+inline void to_json(json& j, const DisconnectResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, DisconnectResponse& p) {
+inline void from_json(const json& j, DisconnectResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -2728,13 +2725,13 @@ struct TerminateRequest : Request {
   std::optional<bool> restart;
 };
 
-void to_json(json& j, const TerminateRequest& p) {
+inline void to_json(json& j, const TerminateRequest& p) {
   j = static_cast<Request>(p);
   if(p.restart)
     j["arguments"]["restart"] = *p.restart;
 }
 
-void from_json(const json& j, TerminateRequest& p) {
+inline void from_json(const json& j, TerminateRequest& p) {
   j.get_to(static_cast<Request&>(p));
   if(auto it {j.find("arguments")}; it != j.end())
     from_optJson(*it, "restart", p.restart);
@@ -2746,11 +2743,11 @@ struct TerminateResponse : Response {
   TerminateResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const TerminateResponse& p) {
+inline void to_json(json& j, const TerminateResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, TerminateResponse& p) {
+inline void from_json(const json& j, TerminateResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -2766,7 +2763,7 @@ struct BreakpointLocationsRequest : Request {
   std::optional<std::int64_t> endColumn;
 };
 
-void to_json(json& j, const BreakpointLocationsRequest& p) {
+inline void to_json(json& j, const BreakpointLocationsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["source"] = p.source;
@@ -2776,7 +2773,7 @@ void to_json(json& j, const BreakpointLocationsRequest& p) {
   to_optJson(arguments, "endColumn", p.endColumn);
 }
 
-void from_json(const json& j, BreakpointLocationsRequest& p) {
+inline void from_json(const json& j, BreakpointLocationsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("source").get_to(p.source);
@@ -2794,13 +2791,13 @@ struct BreakpointLocationsResponse : Response {
   std::vector<BreakpointLocation> breakpoints;
 };
 
-void to_json(json& j, const BreakpointLocationsResponse& p) {
+inline void to_json(json& j, const BreakpointLocationsResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["breakpoints"] = p.breakpoints;
 }
 
-void from_json(const json& j, BreakpointLocationsResponse& p) {
+inline void from_json(const json& j, BreakpointLocationsResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("breakpoints").get_to(p.breakpoints);
@@ -2817,7 +2814,7 @@ struct SetBreakpointsRequest : Request {
   std::optional<bool> sourceModified;
 };
 
-void to_json(json& j, const SetBreakpointsRequest& p) {
+inline void to_json(json& j, const SetBreakpointsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["source"] = p.source;
@@ -2826,7 +2823,7 @@ void to_json(json& j, const SetBreakpointsRequest& p) {
   to_optJson(arguments, "sourceModified", p.sourceModified);
 }
 
-void from_json(const json& j, SetBreakpointsRequest& p) {
+inline void from_json(const json& j, SetBreakpointsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("source").get_to(p.source);
@@ -2843,13 +2840,13 @@ struct SetBreakpointsResponse : Response {
   std::optional<std::vector<SourceBreakpoint>> breakpoints;
 };
 
-void to_json(json& j, const SetBreakpointsResponse& p) {
+inline void to_json(json& j, const SetBreakpointsResponse& p) {
   j = static_cast<Response>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "breakpoints", p.breakpoints);
 }
 
-void from_json(const json& j, SetBreakpointsResponse& p) {
+inline void from_json(const json& j, SetBreakpointsResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "breakpoints", p.breakpoints);
@@ -2863,13 +2860,13 @@ struct SetFunctionBreakpointsRequest : Request {
   std::vector<FunctionBreakpoint> breakpoints;
 };
 
-void to_json(json& j, const SetFunctionBreakpointsRequest& p) {
+inline void to_json(json& j, const SetFunctionBreakpointsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["breakpoints"] = p.breakpoints;
 }
 
-void from_json(const json& j, SetFunctionBreakpointsRequest& p) {
+inline void from_json(const json& j, SetFunctionBreakpointsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("breakpoints").get_to(p.breakpoints);
@@ -2881,13 +2878,13 @@ struct SetFunctionBreakpointsBaseResponse : Response {
   std::vector<Breakpoint> breakpoints;
 };
 
-void to_json(json& j, const SetFunctionBreakpointsBaseResponse& p) {
+inline void to_json(json& j, const SetFunctionBreakpointsBaseResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["breakpoints"] = p.breakpoints;
 }
 
-void from_json(const json& j, SetFunctionBreakpointsBaseResponse& p) {
+inline void from_json(const json& j, SetFunctionBreakpointsBaseResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("breakpoints").get_to(p.breakpoints);
@@ -2900,11 +2897,11 @@ struct SetFunctionBreakpointsResponse : SetFunctionBreakpointsBaseResponse {
       : SetFunctionBreakpointsBaseResponse {command_id, true} {}
 };
 
-void to_json(json& j, const SetFunctionBreakpointsResponse& p) {
+inline void to_json(json& j, const SetFunctionBreakpointsResponse& p) {
   j = static_cast<SetFunctionBreakpointsBaseResponse>(p);
 }
 
-void from_json(const json& j, SetFunctionBreakpointsResponse& p) {
+inline void from_json(const json& j, SetFunctionBreakpointsResponse& p) {
   j.get_to(static_cast<SetFunctionBreakpointsBaseResponse&>(p));
 }
 
@@ -2919,7 +2916,7 @@ struct SetExceptionBreakpointsRequest : Request {
   std::optional<std::vector<ExceptionOptions>> exceptionOptions;
 };
 
-void to_json(json& j, const SetExceptionBreakpointsRequest& p) {
+inline void to_json(json& j, const SetExceptionBreakpointsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["filters"] = p.filters;
@@ -2927,7 +2924,7 @@ void to_json(json& j, const SetExceptionBreakpointsRequest& p) {
   to_optJson(arguments, "exceptionOptions", p.exceptionOptions);
 }
 
-void from_json(const json& j, SetExceptionBreakpointsRequest& p) {
+inline void from_json(const json& j, SetExceptionBreakpointsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("filters").get_to(p.filters);
@@ -2944,13 +2941,13 @@ struct SetExceptionBreakpointsResponse : Response {
   std::optional<std::vector<Breakpoint>> breakpoints;
 };
 
-void to_json(json& j, const SetExceptionBreakpointsResponse& p) {
+inline void to_json(json& j, const SetExceptionBreakpointsResponse& p) {
   j = static_cast<Response>(p);
   if(p.breakpoints)
     j["body"]["breakpoints"] = *p.breakpoints;
 }
 
-void from_json(const json& j, SetExceptionBreakpointsResponse& p) {
+inline void from_json(const json& j, SetExceptionBreakpointsResponse& p) {
   j.get_to(static_cast<Response&>(p));
   if(auto it {j.find("body")}; it != j.end())
     from_optJson(*it, "breakpoints", p.breakpoints);
@@ -2965,14 +2962,14 @@ struct DataBreakpointInfoRequest : Request {
   std::string name;
 };
 
-void to_json(json& j, const DataBreakpointInfoRequest& p) {
+inline void to_json(json& j, const DataBreakpointInfoRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "variablesReference", p.variablesReference);
   arguments["name"] = p.name;
 }
 
-void from_json(const json& j, DataBreakpointInfoRequest& p) {
+inline void from_json(const json& j, DataBreakpointInfoRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "variablesReference", p.variablesReference);
@@ -2990,7 +2987,7 @@ struct DataBreakpointInfoResponse : Response {
   std::optional<bool> canPersist;
 };
 
-void to_json(json& j, const DataBreakpointInfoResponse& p) {
+inline void to_json(json& j, const DataBreakpointInfoResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   if(p.dataId)
@@ -3002,7 +2999,7 @@ void to_json(json& j, const DataBreakpointInfoResponse& p) {
   to_optJson(body, "canPersist", p.canPersist);
 }
 
-void from_json(const json& j, DataBreakpointInfoResponse& p) {
+inline void from_json(const json& j, DataBreakpointInfoResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   if(auto dataId {body.at("dataId")}; !dataId.is_null())
@@ -3020,13 +3017,13 @@ struct SetDataBreakpointsRequest : Request {
   std::vector<DataBreakpoint> breakpoints;
 };
 
-void to_json(json& j, const SetDataBreakpointsRequest& p) {
+inline void to_json(json& j, const SetDataBreakpointsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["breakpoints"] = p.breakpoints;
 }
 
-void from_json(const json& j, SetDataBreakpointsRequest& p) {
+inline void from_json(const json& j, SetDataBreakpointsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("breakpoints").get_to(p.breakpoints);
@@ -3039,11 +3036,11 @@ struct SetDataBreakpointsResponse : SetFunctionBreakpointsBaseResponse {
       : SetFunctionBreakpointsBaseResponse {command_id, true} {}
 };
 
-void to_json(json& j, const SetDataBreakpointsResponse& p) {
+inline void to_json(json& j, const SetDataBreakpointsResponse& p) {
   j = static_cast<SetFunctionBreakpointsBaseResponse>(p);
 }
 
-void from_json(const json& j, SetDataBreakpointsResponse& p) {
+inline void from_json(const json& j, SetDataBreakpointsResponse& p) {
   j.get_to(static_cast<SetFunctionBreakpointsBaseResponse&>(p));
 }
 
@@ -3056,13 +3053,13 @@ struct SetInstructionBreakpointsRequest : Request {
   std::vector<InstructionBreakpoint> breakpoints;
 };
 
-void to_json(json& j, const SetInstructionBreakpointsRequest& p) {
+inline void to_json(json& j, const SetInstructionBreakpointsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["breakpoints"] = p.breakpoints;
 }
 
-void from_json(const json& j, SetInstructionBreakpointsRequest& p) {
+inline void from_json(const json& j, SetInstructionBreakpointsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("breakpoints").get_to(p.breakpoints);
@@ -3076,11 +3073,11 @@ struct SetInstructionBreakpointsResponse : SetFunctionBreakpointsBaseResponse {
       : SetFunctionBreakpointsBaseResponse {command_id, true} {}
 };
 
-void to_json(json& j, const SetInstructionBreakpointsResponse& p) {
+inline void to_json(json& j, const SetInstructionBreakpointsResponse& p) {
   j = static_cast<SetFunctionBreakpointsBaseResponse>(p);
 }
 
-void from_json(const json& j, SetInstructionBreakpointsResponse& p) {
+inline void from_json(const json& j, SetInstructionBreakpointsResponse& p) {
   j.get_to(static_cast<SetFunctionBreakpointsBaseResponse&>(p));
 }
 
@@ -3091,14 +3088,14 @@ struct ContinueBaseRequest : Request {
   std::optional<bool> singleThread;
 };
 
-void to_json(json& j, const ContinueBaseRequest& p) {
+inline void to_json(json& j, const ContinueBaseRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["threadId"] = p.threadId;
   to_optJson(arguments, "singleThread", p.singleThread);
 }
 
-void from_json(const json& j, ContinueBaseRequest& p) {
+inline void from_json(const json& j, ContinueBaseRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("threadId").get_to(p.threadId);
@@ -3111,11 +3108,11 @@ struct ContinueRequest : ContinueBaseRequest {
   ContinueRequest() : ContinueBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const ContinueRequest& p) {
+inline void to_json(json& j, const ContinueRequest& p) {
   j = static_cast<ContinueBaseRequest>(p);
 }
 
-void from_json(const json& j, ContinueRequest& p) {
+inline void from_json(const json& j, ContinueRequest& p) {
   j.get_to(static_cast<ContinueBaseRequest&>(p));
 }
 
@@ -3127,13 +3124,13 @@ struct ContinueResponse : Response {
   std::optional<bool> allThreadsContinued;
 };
 
-void to_json(json& j, const ContinueResponse& p) {
+inline void to_json(json& j, const ContinueResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   to_optJson(body, "allThreadsContinued", p.allThreadsContinued);
 }
 
-void from_json(const json& j, ContinueResponse& p) {
+inline void from_json(const json& j, ContinueResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   from_optJson(body, "allThreadsContinued", p.allThreadsContinued);
@@ -3147,7 +3144,7 @@ struct NextBaseRequest : Request {
   std::optional<SteppingGranularity> granularity;
 };
 
-void to_json(json& j, const NextBaseRequest& p) {
+inline void to_json(json& j, const NextBaseRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["threadId"] = p.threadId;
@@ -3155,7 +3152,7 @@ void to_json(json& j, const NextBaseRequest& p) {
   to_optJson(arguments, "granularity", p.granularity);
 }
 
-void from_json(const json& j, NextBaseRequest& p) {
+inline void from_json(const json& j, NextBaseRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("threadId").get_to(p.threadId);
@@ -3169,11 +3166,11 @@ struct NextRequest : NextBaseRequest {
   NextRequest() : NextBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const NextRequest& p) {
+inline void to_json(json& j, const NextRequest& p) {
   j = static_cast<NextBaseRequest>(p);
 }
 
-void from_json(const json& j, NextRequest& p) {
+inline void from_json(const json& j, NextRequest& p) {
   j.get_to(static_cast<NextBaseRequest&>(p));
 }
 
@@ -3183,11 +3180,11 @@ struct NextResponse : Response {
   NextResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const NextResponse& p) {
+inline void to_json(json& j, const NextResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, NextResponse& p) {
+inline void from_json(const json& j, NextResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3202,7 +3199,7 @@ struct StepInRequest : Request {
   std::optional<SteppingGranularity> granularity;
 };
 
-void to_json(json& j, const StepInRequest& p) {
+inline void to_json(json& j, const StepInRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["threadId"] = p.threadId;
@@ -3211,7 +3208,7 @@ void to_json(json& j, const StepInRequest& p) {
   to_optJson(arguments, "granularity", p.granularity);
 }
 
-void from_json(const json& j, StepInRequest& p) {
+inline void from_json(const json& j, StepInRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("threadId").get_to(p.threadId);
@@ -3226,11 +3223,11 @@ struct StepInResponse : Response {
   StepInResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const StepInResponse& p) {
+inline void to_json(json& j, const StepInResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, StepInResponse& p) {
+inline void from_json(const json& j, StepInResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3240,11 +3237,11 @@ struct StepOutRequest : NextBaseRequest {
   StepOutRequest() : NextBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const StepOutRequest& p) {
+inline void to_json(json& j, const StepOutRequest& p) {
   j = static_cast<NextBaseRequest>(p);
 }
 
-void from_json(const json& j, StepOutRequest& p) {
+inline void from_json(const json& j, StepOutRequest& p) {
   j.get_to(static_cast<NextBaseRequest&>(p));
 }
 
@@ -3254,11 +3251,11 @@ struct StepOutResponse : Response {
   StepOutResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const StepOutResponse& p) {
+inline void to_json(json& j, const StepOutResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, StepOutResponse& p) {
+inline void from_json(const json& j, StepOutResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3268,11 +3265,11 @@ struct StepBackRequest : NextBaseRequest {
   StepBackRequest() : NextBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const StepBackRequest& p) {
+inline void to_json(json& j, const StepBackRequest& p) {
   j = static_cast<NextBaseRequest>(p);
 }
 
-void from_json(const json& j, StepBackRequest& p) {
+inline void from_json(const json& j, StepBackRequest& p) {
   j.get_to(static_cast<NextBaseRequest&>(p));
 }
 
@@ -3282,11 +3279,11 @@ struct StepBackResponse : Response {
   StepBackResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const StepBackResponse& p) {
+inline void to_json(json& j, const StepBackResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, StepBackResponse& p) {
+inline void from_json(const json& j, StepBackResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3296,11 +3293,11 @@ struct ReverseContinueRequest : ContinueBaseRequest {
   ReverseContinueRequest() : ContinueBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const ReverseContinueRequest& p) {
+inline void to_json(json& j, const ReverseContinueRequest& p) {
   j = static_cast<ContinueBaseRequest>(p);
 }
 
-void from_json(const json& j, ReverseContinueRequest& p) {
+inline void from_json(const json& j, ReverseContinueRequest& p) {
   j.get_to(static_cast<ContinueBaseRequest&>(p));
 }
 
@@ -3310,11 +3307,11 @@ struct ReverseContinueResponse : Response {
   ReverseContinueResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const ReverseContinueResponse& p) {
+inline void to_json(json& j, const ReverseContinueResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, ReverseContinueResponse& p) {
+inline void from_json(const json& j, ReverseContinueResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3322,13 +3319,13 @@ struct RestartFrameBaseRequest : Request {
   std::int64_t frameId;
 };
 
-void to_json(json& j, const RestartFrameBaseRequest& p) {
+inline void to_json(json& j, const RestartFrameBaseRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["frameId"] = p.frameId;
 }
 
-void from_json(const json& j, RestartFrameBaseRequest& p) {
+inline void from_json(const json& j, RestartFrameBaseRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("frameId").get_to(p.frameId);
@@ -3340,11 +3337,11 @@ struct RestartFrameRequest : RestartFrameBaseRequest {
   RestartFrameRequest() : RestartFrameBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const RestartFrameRequest& p) {
+inline void to_json(json& j, const RestartFrameRequest& p) {
   j = static_cast<RestartFrameBaseRequest>(p);
 }
 
-void from_json(const json& j, RestartFrameRequest& p) {
+inline void from_json(const json& j, RestartFrameRequest& p) {
   j.get_to(static_cast<RestartFrameBaseRequest&>(p));
 }
 
@@ -3354,11 +3351,11 @@ struct RestartFrameResponse : Response {
   RestartFrameResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const RestartFrameResponse& p) {
+inline void to_json(json& j, const RestartFrameResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, RestartFrameResponse& p) {
+inline void from_json(const json& j, RestartFrameResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3371,14 +3368,14 @@ struct GotoRequest : Request {
   std::int64_t targetId;
 };
 
-void to_json(json& j, const GotoRequest& p) {
+inline void to_json(json& j, const GotoRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["threadId"] = p.threadId;
   arguments["targetId"] = p.targetId;
 }
 
-void from_json(const json& j, GotoRequest& p) {
+inline void from_json(const json& j, GotoRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("threadId").get_to(p.threadId);
@@ -3391,11 +3388,11 @@ struct GotoResponse : Response {
   GotoResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const GotoResponse& p) {
+inline void to_json(json& j, const GotoResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, GotoResponse& p) {
+inline void from_json(const json& j, GotoResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3405,13 +3402,13 @@ struct PauseBaseRequest : Request {
   std::int64_t threadId;
 };
 
-void to_json(json& j, const PauseBaseRequest& p) {
+inline void to_json(json& j, const PauseBaseRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["threadId"] = p.threadId;
 }
 
-void from_json(const json& j, PauseBaseRequest& p) {
+inline void from_json(const json& j, PauseBaseRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("threadId").get_to(p.threadId);
@@ -3423,11 +3420,11 @@ struct PauseRequest : PauseBaseRequest {
   PauseRequest() : PauseBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const PauseRequest& p) {
+inline void to_json(json& j, const PauseRequest& p) {
   j = static_cast<PauseBaseRequest>(p);
 }
 
-void from_json(const json& j, PauseRequest& p) {
+inline void from_json(const json& j, PauseRequest& p) {
   j.get_to(static_cast<PauseBaseRequest&>(p));
 }
 
@@ -3437,11 +3434,11 @@ struct PauseResponse : Response {
   PauseResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const PauseResponse& p) {
+inline void to_json(json& j, const PauseResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, PauseResponse& p) {
+inline void from_json(const json& j, PauseResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3456,7 +3453,7 @@ struct StackTraceRequest : Request {
   std::optional<StackFrameFormat> format;
 };
 
-void to_json(json& j, const StackTraceRequest& p) {
+inline void to_json(json& j, const StackTraceRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["threadId"] = p.threadId;
@@ -3465,7 +3462,7 @@ void to_json(json& j, const StackTraceRequest& p) {
   to_optJson(arguments, "format", p.format);
 }
 
-void from_json(const json& j, StackTraceRequest& p) {
+inline void from_json(const json& j, StackTraceRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("threadId").get_to(p.threadId);
@@ -3484,14 +3481,14 @@ struct StackTraceResponse : Response {
   std::optional<std::int64_t> totalFrames;
 };
 
-void to_json(json& j, const StackTraceResponse& p) {
+inline void to_json(json& j, const StackTraceResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["stackFrames"] = p.stackFrames;
   to_optJson(body, "totalFrames", p.totalFrames);
 }
 
-void from_json(const json& j, StackTraceResponse& p) {
+inline void from_json(const json& j, StackTraceResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("stackFrames").get_to(p.stackFrames);
@@ -3504,11 +3501,11 @@ struct ScopesRequest : RestartFrameBaseRequest {
   ScopesRequest() : RestartFrameBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const ScopesRequest& p) {
+inline void to_json(json& j, const ScopesRequest& p) {
   j = static_cast<RestartFrameBaseRequest>(p);
 }
 
-void from_json(const json& j, ScopesRequest& p) {
+inline void from_json(const json& j, ScopesRequest& p) {
   j.get_to(static_cast<RestartFrameBaseRequest&>(p));
 }
 
@@ -3520,13 +3517,13 @@ struct ScopesResponse : Response {
   std::vector<Scope> scopes;
 };
 
-void to_json(json& j, const ScopesResponse& p) {
+inline void to_json(json& j, const ScopesResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["scopes"] = p.scopes;
 }
 
-void from_json(const json& j, ScopesResponse& p) {
+inline void from_json(const json& j, ScopesResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("scopes").get_to(p.scopes);
@@ -3537,7 +3534,7 @@ enum struct VariablesFilter {
   named,
 };
 
-void to_json(json& j, const VariablesFilter& p) {
+inline void to_json(json& j, const VariablesFilter& p) {
   switch(p) {
     case VariablesFilter::indexed:
       j = "indexed";
@@ -3550,7 +3547,7 @@ void to_json(json& j, const VariablesFilter& p) {
   };
 }
 
-void from_json(const json& j, VariablesFilter& p) {
+inline void from_json(const json& j, VariablesFilter& p) {
   std::string s {j.get<std::string>()};
   if(s == "indexed")
     p = VariablesFilter::indexed;
@@ -3573,7 +3570,7 @@ struct VariablesRequest : Request {
   std::optional<ValueFormat> format;
 };
 
-void to_json(json& j, const VariablesRequest& p) {
+inline void to_json(json& j, const VariablesRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["variablesReference"] = p.variablesReference;
@@ -3583,7 +3580,7 @@ void to_json(json& j, const VariablesRequest& p) {
   to_optJson(arguments, "format", p.format);
 }
 
-void from_json(const json& j, VariablesRequest& p) {
+inline void from_json(const json& j, VariablesRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("variablesReference").get_to(p.variablesReference);
@@ -3601,13 +3598,13 @@ struct VariablesResponse : Response {
   std::vector<Variable> variables;
 };
 
-void to_json(json& j, const VariablesResponse& p) {
+inline void to_json(json& j, const VariablesResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["variables"] = p.variables;
 }
 
-void from_json(const json& j, VariablesResponse& p) {
+inline void from_json(const json& j, VariablesResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("variables").get_to(p.variables);
@@ -3624,7 +3621,7 @@ struct SetVariableRequest : Request {
   std::optional<ValueFormat> format;
 };
 
-void to_json(json& j, const SetVariableRequest& p) {
+inline void to_json(json& j, const SetVariableRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["variablesReference"] = p.variablesReference;
@@ -3633,7 +3630,7 @@ void to_json(json& j, const SetVariableRequest& p) {
   to_optJson(arguments, "format", p.format);
 }
 
-void from_json(const json& j, SetVariableRequest& p) {
+inline void from_json(const json& j, SetVariableRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("variablesReference").get_to(p.variablesReference);
@@ -3654,7 +3651,7 @@ struct SetVariableResponse : Response {
   std::optional<std::int64_t> indexedVariables;
 };
 
-void to_json(json& j, const SetVariableResponse& p) {
+inline void to_json(json& j, const SetVariableResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["value"] = p.value;
@@ -3664,7 +3661,7 @@ void to_json(json& j, const SetVariableResponse& p) {
   to_optJson(body, "indexedVariables", p.indexedVariables);
 }
 
-void from_json(const json& j, SetVariableResponse& p) {
+inline void from_json(const json& j, SetVariableResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("value").get_to(p.value);
@@ -3683,14 +3680,14 @@ struct SourceRequest : Request {
   std::int64_t sourceReference;
 };
 
-void to_json(json& j, const SourceRequest& p) {
+inline void to_json(json& j, const SourceRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "source", p.source);
   arguments["sourceReference"] = p.sourceReference;
 }
 
-void from_json(const json& j, SourceRequest& p) {
+inline void from_json(const json& j, SourceRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "source", p.source);
@@ -3706,14 +3703,14 @@ struct SourceResponse : Response {
   std::optional<std::string> mimeType;
 };
 
-void to_json(json& j, const SourceResponse& p) {
+inline void to_json(json& j, const SourceResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["content"] = p.content;
   to_optJson(body, "mimeType", p.mimeType);
 }
 
-void from_json(const json& j, SourceResponse& p) {
+inline void from_json(const json& j, SourceResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("content").get_to(p.content);
@@ -3726,11 +3723,11 @@ struct ThreadsRequest : Request {
   ThreadsRequest() : Request {command_id} {}
 };
 
-void to_json(json& j, const ThreadsRequest& p) {
+inline void to_json(json& j, const ThreadsRequest& p) {
   j = static_cast<Request>(p);
 }
 
-void from_json(const json& j, ThreadsRequest& p) {
+inline void from_json(const json& j, ThreadsRequest& p) {
   j.get_to(static_cast<Request&>(p));
 }
 
@@ -3742,13 +3739,13 @@ struct ThreadsResponse : Response {
   std::vector<Thread> threads;
 };
 
-void to_json(json& j, const ThreadsResponse& p) {
+inline void to_json(json& j, const ThreadsResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["threads"] = p.threads;
 }
 
-void from_json(const json& j, ThreadsResponse& p) {
+inline void from_json(const json& j, ThreadsResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("threads").get_to(p.threads);
@@ -3762,13 +3759,13 @@ struct TerminateThreadsRequest : Request {
   std::optional<std::vector<std::int64_t>> threadIds;
 };
 
-void to_json(json& j, const TerminateThreadsRequest& p) {
+inline void to_json(json& j, const TerminateThreadsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "threadIds", p.threadIds);
 }
 
-void from_json(const json& j, TerminateThreadsRequest& p) {
+inline void from_json(const json& j, TerminateThreadsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "threadIds", p.threadIds);
@@ -3780,11 +3777,11 @@ struct TerminateThreadsResponse : Response {
   TerminateThreadsResponse() : Response {command_id, true} {}
 };
 
-void to_json(json& j, const TerminateThreadsResponse& p) {
+inline void to_json(json& j, const TerminateThreadsResponse& p) {
   j = static_cast<Response>(p);
 }
 
-void from_json(const json& j, TerminateThreadsResponse& p) {
+inline void from_json(const json& j, TerminateThreadsResponse& p) {
   j.get_to(static_cast<Response&>(p));
 }
 
@@ -3797,14 +3794,14 @@ struct ModulesRequest : Request {
   std::optional<std::int64_t> moduleCount;
 };
 
-void to_json(json& j, const ModulesRequest& p) {
+inline void to_json(json& j, const ModulesRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "startModule", p.startModule);
   to_optJson(arguments, "moduleCount", p.moduleCount);
 }
 
-void from_json(const json& j, ModulesRequest& p) {
+inline void from_json(const json& j, ModulesRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "startModule", p.startModule);
@@ -3820,14 +3817,14 @@ struct ModulesResponse : Response {
   std::optional<std::int64_t> totalModules;
 };
 
-void to_json(json& j, const ModulesResponse& p) {
+inline void to_json(json& j, const ModulesResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["modules"] = p.modules;
   to_optJson(body, "totalModules", p.totalModules);
 }
 
-void from_json(const json& j, ModulesResponse& p) {
+inline void from_json(const json& j, ModulesResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("modules").get_to(p.modules);
@@ -3840,11 +3837,11 @@ struct LoadedSourcesRequest : Request {
   LoadedSourcesRequest() : Request {command_id} {}
 };
 
-void to_json(json& j, const LoadedSourcesRequest& p) {
+inline void to_json(json& j, const LoadedSourcesRequest& p) {
   j = static_cast<Request>(p);
 }
 
-void from_json(const json& j, LoadedSourcesRequest& p) {
+inline void from_json(const json& j, LoadedSourcesRequest& p) {
   j.get_to(static_cast<Request&>(p));
 }
 
@@ -3856,13 +3853,13 @@ struct LoadedSourcesResponse : Response {
   std::vector<Source> sources;
 };
 
-void to_json(json& j, const LoadedSourcesResponse& p) {
+inline void to_json(json& j, const LoadedSourcesResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["sources"] = p.sources;
 }
 
-void from_json(const json& j, LoadedSourcesResponse& p) {
+inline void from_json(const json& j, LoadedSourcesResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("sources").get_to(p.sources);
@@ -3879,7 +3876,7 @@ struct EvaluateRequest : Request {
   std::optional<ValueFormat> format;
 };
 
-void to_json(json& j, const EvaluateRequest& p) {
+inline void to_json(json& j, const EvaluateRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["expression"] = p.expression;
@@ -3888,7 +3885,7 @@ void to_json(json& j, const EvaluateRequest& p) {
   to_optJson(arguments, "format", p.format);
 }
 
-void from_json(const json& j, EvaluateRequest& p) {
+inline void from_json(const json& j, EvaluateRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("expression").get_to(p.expression);
@@ -3911,7 +3908,7 @@ struct EvaluateResponse : Response {
   std::optional<std::string> memoryReference;
 };
 
-void to_json(json& j, const EvaluateResponse& p) {
+inline void to_json(json& j, const EvaluateResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["result"] = p.result;
@@ -3923,7 +3920,7 @@ void to_json(json& j, const EvaluateResponse& p) {
   to_optJson(body, "memoryReference", p.memoryReference);
 }
 
-void from_json(const json& j, EvaluateResponse& p) {
+inline void from_json(const json& j, EvaluateResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("result").get_to(p.result);
@@ -3946,7 +3943,7 @@ struct SetExpressionRequest : Request {
   std::optional<ValueFormat> format;
 };
 
-void to_json(json& j, const SetExpressionRequest& p) {
+inline void to_json(json& j, const SetExpressionRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["expression"] = p.expression;
@@ -3955,7 +3952,7 @@ void to_json(json& j, const SetExpressionRequest& p) {
   to_optJson(arguments, "format", p.format);
 }
 
-void from_json(const json& j, SetExpressionRequest& p) {
+inline void from_json(const json& j, SetExpressionRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("expression").get_to(p.expression);
@@ -3977,7 +3974,7 @@ struct SetExpressionResponse : Response {
   std::optional<std::int64_t> indexedVariables;
 };
 
-void to_json(json& j, const SetExpressionResponse& p) {
+inline void to_json(json& j, const SetExpressionResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["value"] = p.value;
@@ -3988,7 +3985,7 @@ void to_json(json& j, const SetExpressionResponse& p) {
   to_optJson(body, "indexedVariables", p.indexedVariables);
 }
 
-void from_json(const json& j, SetExpressionResponse& p) {
+inline void from_json(const json& j, SetExpressionResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("value").get_to(p.value);
@@ -4007,13 +4004,13 @@ struct StepInTargetsRequest : Request {
   std::int64_t frameId;
 };
 
-void to_json(json& j, const StepInTargetsRequest& p) {
+inline void to_json(json& j, const StepInTargetsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["frameId"] = p.frameId;
 }
 
-void from_json(const json& j, StepInTargetsRequest& p) {
+inline void from_json(const json& j, StepInTargetsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("frameId").get_to(p.frameId);
@@ -4027,13 +4024,13 @@ struct StepInTargetsResponse : Response {
   std::vector<StepInTarget> targets;
 };
 
-void to_json(json& j, const StepInTargetsResponse& p) {
+inline void to_json(json& j, const StepInTargetsResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["targets"] = p.targets;
 }
 
-void from_json(const json& j, StepInTargetsResponse& p) {
+inline void from_json(const json& j, StepInTargetsResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("targets").get_to(p.targets);
@@ -4049,7 +4046,7 @@ struct GotoTargetsRequest : Request {
   std::optional<std::int64_t> column;
 };
 
-void to_json(json& j, const GotoTargetsRequest& p) {
+inline void to_json(json& j, const GotoTargetsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["source"] = p.source;
@@ -4057,7 +4054,7 @@ void to_json(json& j, const GotoTargetsRequest& p) {
   to_optJson(arguments, "column", p.column);
 }
 
-void from_json(const json& j, GotoTargetsRequest& p) {
+inline void from_json(const json& j, GotoTargetsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("source").get_to(p.source);
@@ -4073,13 +4070,13 @@ struct GotoTargetsResponse : Response {
   std::vector<GotoTarget> targets;
 };
 
-void to_json(json& j, const GotoTargetsResponse& p) {
+inline void to_json(json& j, const GotoTargetsResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["targets"] = p.targets;
 }
 
-void from_json(const json& j, GotoTargetsResponse& p) {
+inline void from_json(const json& j, GotoTargetsResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("targets").get_to(p.targets);
@@ -4096,7 +4093,7 @@ struct CompletionsRequest : Request {
   std::optional<std::int64_t> line;
 };
 
-void to_json(json& j, const CompletionsRequest& p) {
+inline void to_json(json& j, const CompletionsRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   to_optJson(arguments, "frameId", p.frameId);
@@ -4105,7 +4102,7 @@ void to_json(json& j, const CompletionsRequest& p) {
   to_optJson(arguments, "line", p.line);
 }
 
-void from_json(const json& j, CompletionsRequest& p) {
+inline void from_json(const json& j, CompletionsRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   from_optJson(arguments, "frameId", p.frameId);
@@ -4122,13 +4119,13 @@ struct CompletionsResponse : Response {
   std::vector<CompletionItem> targets;
 };
 
-void to_json(json& j, const CompletionsResponse& p) {
+inline void to_json(json& j, const CompletionsResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["targets"] = p.targets;
 }
 
-void from_json(const json& j, CompletionsResponse& p) {
+inline void from_json(const json& j, CompletionsResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("targets").get_to(p.targets);
@@ -4140,11 +4137,11 @@ struct ExceptionInfoRequest : PauseBaseRequest {
   ExceptionInfoRequest() : PauseBaseRequest {command_id} {}
 };
 
-void to_json(json& j, const ExceptionInfoRequest& p) {
+inline void to_json(json& j, const ExceptionInfoRequest& p) {
   j = static_cast<PauseBaseRequest>(p);
 }
 
-void from_json(const json& j, ExceptionInfoRequest& p) {
+inline void from_json(const json& j, ExceptionInfoRequest& p) {
   j.get_to(static_cast<PauseBaseRequest&>(p));
 }
 
@@ -4159,7 +4156,7 @@ struct ExceptionInfoResponse : Response {
   std::optional<ExceptionDetails> details;
 };
 
-void to_json(json& j, const ExceptionInfoResponse& p) {
+inline void to_json(json& j, const ExceptionInfoResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["exceptionId"] = p.exceptionId;
@@ -4168,7 +4165,7 @@ void to_json(json& j, const ExceptionInfoResponse& p) {
   to_optJson(body, "details", p.details);
 }
 
-void from_json(const json& j, ExceptionInfoResponse& p) {
+inline void from_json(const json& j, ExceptionInfoResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("exceptionId").get_to(p.exceptionId);
@@ -4187,7 +4184,7 @@ struct ReadMemoryRequest : Request {
   std::int64_t count;
 };
 
-void to_json(json& j, const ReadMemoryRequest& p) {
+inline void to_json(json& j, const ReadMemoryRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["memoryReference"] = p.memoryReference;
@@ -4195,7 +4192,7 @@ void to_json(json& j, const ReadMemoryRequest& p) {
   arguments["count"] = p.count;
 }
 
-void from_json(const json& j, ReadMemoryRequest& p) {
+inline void from_json(const json& j, ReadMemoryRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("memoryReference").get_to(p.memoryReference);
@@ -4213,7 +4210,7 @@ struct ReadMemoryResponse : Response {
   std::optional<std::string> data;
 };
 
-void to_json(json& j, const ReadMemoryResponse& p) {
+inline void to_json(json& j, const ReadMemoryResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["address"] = p.address;
@@ -4221,7 +4218,7 @@ void to_json(json& j, const ReadMemoryResponse& p) {
   to_optJson(body, "data", p.data);
 }
 
-void from_json(const json& j, ReadMemoryResponse& p) {
+inline void from_json(const json& j, ReadMemoryResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("address").get_to(p.address);
@@ -4240,7 +4237,7 @@ struct WriteMemoryRequest : Request {
   std::string data;
 };
 
-void to_json(json& j, const WriteMemoryRequest& p) {
+inline void to_json(json& j, const WriteMemoryRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["memoryReference"] = p.memoryReference;
@@ -4249,7 +4246,7 @@ void to_json(json& j, const WriteMemoryRequest& p) {
   arguments["data"] = p.data;
 }
 
-void from_json(const json& j, WriteMemoryRequest& p) {
+inline void from_json(const json& j, WriteMemoryRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("memoryReference").get_to(p.memoryReference);
@@ -4267,14 +4264,14 @@ struct WriteMemoryResponse : Response {
   std::optional<std::int64_t> bytesWritten;
 };
 
-void to_json(json& j, const WriteMemoryResponse& p) {
+inline void to_json(json& j, const WriteMemoryResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   to_optJson(body, "offset", p.offset);
   to_optJson(body, "bytesWritten", p.bytesWritten);
 }
 
-void from_json(const json& j, WriteMemoryResponse& p) {
+inline void from_json(const json& j, WriteMemoryResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   from_optJson(body, "offset", p.offset);
@@ -4293,7 +4290,7 @@ struct DisassembleRequest : Request {
   std::optional<bool> resolveSymbols;
 };
 
-void to_json(json& j, const DisassembleRequest& p) {
+inline void to_json(json& j, const DisassembleRequest& p) {
   j = static_cast<Request>(p);
   json& arguments {j["arguments"]};
   arguments["memoryReference"] = p.memoryReference;
@@ -4303,7 +4300,7 @@ void to_json(json& j, const DisassembleRequest& p) {
   to_optJson(arguments, "resolveSymbols", p.resolveSymbols);
 }
 
-void from_json(const json& j, DisassembleRequest& p) {
+inline void from_json(const json& j, DisassembleRequest& p) {
   j.get_to(static_cast<Request&>(p));
   const json& arguments {j.at("arguments")};
   arguments.at("memoryReference").get_to(p.memoryReference);
@@ -4321,13 +4318,13 @@ struct DisassembleResponse : Response {
   std::vector<DisassembledInstruction> instructions;
 };
 
-void to_json(json& j, const DisassembleResponse& p) {
+inline void to_json(json& j, const DisassembleResponse& p) {
   j = static_cast<Response>(p);
   json& body {j["body"]};
   body["instructions"] = p.instructions;
 }
 
-void from_json(const json& j, DisassembleResponse& p) {
+inline void from_json(const json& j, DisassembleResponse& p) {
   j.get_to(static_cast<Response&>(p));
   const json& body {j.at("body")};
   body.at("instructions").get_to(p.instructions);
